@@ -15,7 +15,7 @@ def calculate_stock_metrics(input_path: str, output_path: str):
     symbol = utils.get_symbol_from_full_path(input_path)
     period = utils.get_period_from_full_path(input_path)
 
-    stock_df = pd.read_parquet(input_path, columns=['dividends_filled', 'close'])
+    stock_df = pd.read_parquet(input_path, columns=['dividends_filled', 'close', 'volume'])
 
     # 20, 60, 200 day moving averages
     stock_df['moving_avg_20'] = np.round(stock_df['close'].rolling(20, min_periods=10).mean(), 2)
