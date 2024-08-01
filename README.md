@@ -3,6 +3,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 
 ## Current State:
 - code for pulling, cleaning, and calculating a couple basic metrics for a stock ticker
+- using pandas for transforms
 - can be in command line or in pycharm with Run Configuration args
 - can persist data to local or existing S3 buckets. I follow the bronze/silver/gold paradigm 
 
@@ -19,10 +20,54 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - S3 paths seem to be recognized and credentials picked up automagically using the s3fs module
   - assuming you have credentials set up in ~/.aws
 
+## Running cleaning/calcs scripts as lambdas
+### The Lambda version of the code is in the lambdas directory\
+### In addition to this code you will need to :
+
+- create a trigger for each lambda :
+  - service : S3
+  - event type : All object create events
+  - bucket : your source data bucket (I use sdt-stock-data)
+  - prefix : any subfolders (I use bronze/ and silver/ for my clean and calcs lambdas)
+  - this will automatically add a [resource-based policy](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) allowing S3 to invoke your lambda function
+- Add a layer
+  - I use 'AWSSDKPandas-Python312' which is one of the available options when adding a layer
+  - should container any non-core python modules that you'd need
+  - in this case we needed awswrangler, numpy, pandas
+- Create a Policy to allow the lambda to write to CloudWatch and S3
+  - Assign this policy to a role
+  - Assign this role to the Lambda
+  - Policy would look omething like this:
+```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream"
+            ],
+            "Resource": "arn:aws:logs:*:*:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::sdt-stock-data",
+                "arn:aws:s3:::sdt-stock-data/*"
+            ]
+        }
+    ]
+  }
+```
+- up your timeout (I did a minute, currently they run in 20 seconds or less)
+
+
 ## Future plans:
-- Automate bronze -> silver (cleaning) and silver -> gold (calculations) processes
-    - lambda which detects new files in bronze bucket
-      - should work as this is < 15 minutes currently
 - BI views, visualization for gold data
     - Multiple metrics at once, nav/price for instance
     - Ability to change timescale as needed

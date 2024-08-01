@@ -1,6 +1,7 @@
 import yfinance as yf
 import argparse as ap
 import logging
+import awswrangler as wr
 
 
 def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
@@ -17,7 +18,8 @@ def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     hist = stock.history(period=period)
 
     logger.info(f'writing stock data for {stock_symbol} to {file_dest}')
-    hist.to_parquet(file_dest)
+    hist.to_parquet(file_dest, index=True)
+    #wr.s3.to_parquet(hist, path=file_dest, index=True)
 
 
 def parse_arg():
