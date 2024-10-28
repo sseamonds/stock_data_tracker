@@ -16,6 +16,7 @@ def get_period_from_full_path(full_path: str) -> str:
 
     return file_name_split[1]
 
+
 def get_aws_credentials(aws_profile='default'):
     """
     Gets the aws credentials from ~/.aws/credentials for aws_profile arg

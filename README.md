@@ -9,10 +9,11 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 
 ### To pull data from Yahoo finance :
 - python stock_data_pull.py --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
+  - period is one of the following values : '1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'
 ### To clean data :
-- python stock_data_clean.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
 ### To calculate metrics :
-- python stock_data_calcs.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
 
 ## NOTES:
 - see [yfinance](https://github.com/ranaroussi/yfinance) docs for general info on using the module
@@ -20,24 +21,28 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - S3 paths seem to be recognized and credentials picked up automagically using the s3fs module
   - assuming you have credentials set up in ~/.aws
 
-## Running cleaning/calcs scripts as lambdas
-### The Lambda version of the code is in the lambdas directory\
-### In addition to this code you will need to :
-
-- create a trigger for each lambda :
+## Running cleaning/calcs scripts as lambdas:
+#### The Lambda version of the code is in the lambdas directory
+#### Setting up with S3-based triggers for lambdas will cause the cleaning and calcs scripts to run when you put a new raw stock file in the s3://<base_bucket>/bronze/ folder. 
+- This can be done manually OR via stock_data_pull.py as described above but with an S3 destination
+#### To setup lambdas for each process: 
+- Create a lambda and 'Deploy' the code : cope the lambdas/*.py file, the corresponding src/stock_data_*./py file and the utils.py to the lambda
+  - do this for each process, currently there are two lambdas for cleaning and calcs
+  - Up your timeout (default is 3 seconds, I did a minute, currently the scripts run in 20 seconds or less)
+- Create a trigger for each lambda :
   - service : S3
   - event type : All object create events
   - bucket : your source data bucket (I use sdt-stock-data)
   - prefix : any subfolders (I use bronze/ and silver/ for my clean and calcs lambdas)
   - this will automatically add a [resource-based policy](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) allowing S3 to invoke your lambda function
-- Add a layer
+- Add a layer for awswrangler/pandas
   - I use 'AWSSDKPandas-Python312' which is one of the available options when adding a layer
-  - should container any non-core python modules that you'd need
-  - in this case we needed awswrangler, numpy, pandas
+  - the layer should contain any non-core python modules that you'd need
+    - in this case we needed awswrangler, numpy, pandas
 - Create a Policy to allow the lambda to write to CloudWatch and S3
   - Assign this policy to a role
   - Assign this role to the Lambda
-  - Policy would look omething like this:
+  - Policy would look something like this:
 ```json
   {
     "Version": "2012-10-17",
@@ -64,7 +69,6 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     ]
   }
 ```
-- up your timeout (I did a minute, currently they run in 20 seconds or less)
 
 
 ## Future plans:
@@ -83,6 +87,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     - Overall gains for a period taking divs into account
 - Store silver/gold data in database?
     - point BI tool here
+    - or would OTF or parquet work with Athena or BI tool?
 - Alerts
     - stock goes above/below moving avg
     - CEF nav discount above/below 1 year, multi-year, all-time average 
@@ -92,10 +97,10 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     - daily pull of individual metrics for each stock
     - write to central store
     - recheck/trigger alerts
-- Dashboard or api lookup for current snapshot view of stock calcs
-    (current discount, pe, relation to 50/200 day avg and other indicators, etc)
+- Dashboard or api lookup for current snapshot view of stock calcs for a symbol:
+  - current discount, pe, relation to 50/200 day avg and other indicators, etc
 - Observations by the hour/minute
-  - stream in, check alerts
+  - stream in, recheck alerts
 - Containerize and automate with AWS batch, if load increases or maybe just for learning's sake
 - DuckDB, Pyspark, ??? for silver -> gold transform if pandas can't handle the load
 - LSTM predictive model
