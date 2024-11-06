@@ -1,7 +1,7 @@
 import json
 import logging
 from urllib.parse import unquote_plus
-from stock_data_clean import clean_stock_data
+from stock_data_clean import clean_price_data, clean_cef_data
 from utils import get_symbol_from_full_path
 
 logger = logging.getLogger()
@@ -26,7 +26,11 @@ def lambda_handler(event, context):
         input_path = f's3://{bucket}/{key}'
         logger.info(f'{input_path=}')
 
-        clean_stock_data(input_path, output_path, logger)
+        if key.find('cefs') != -1:
+            clean_cef_data(input_path, output_path, logger)
+        else:
+            clean_price_data(input_path, output_path, logger)
+
         return {
             "statusCode": 200,
             "headers": {

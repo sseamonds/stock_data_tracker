@@ -1,6 +1,6 @@
 import argparse as ap
 import logging
-from stock_data_clean import clean_stock_data
+from stock_data_clean import clean_price_data, clean_cef_data
 
 
 def parse_arg():
@@ -11,6 +11,8 @@ def parse_arg():
 
     parser.add_argument("--source_path", type=str, required=True)
     parser.add_argument("--dest_path", type=str, required=True)
+    parser.add_argument("--type", type=str, choices=['price', 'cef'], 
+                        default='price', required=False)
 
     params = vars(parser.parse_args())
 
@@ -27,4 +29,7 @@ if __name__ == "__main__":
     source_path = args['source_path']
     dest_path = args['dest_path']
 
-    clean_stock_data(source_path, dest_path, logger, platform='local')
+    if args['type'] == 'cef':
+        clean_cef_data(source_path, dest_path, logger, platform='local')
+    else:
+        clean_price_data(source_path, dest_path, logger, platform='local')

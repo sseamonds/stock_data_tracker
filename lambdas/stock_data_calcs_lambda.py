@@ -1,7 +1,7 @@
 import json
 import logging
 from urllib.parse import unquote_plus
-from stock_data_calcs import calculate_stock_metrics
+from stock_data_calcs import calculate_stock_metrics, calculate_cef_metrics
 from utils import get_symbol_from_full_path
 
 logger = logging.getLogger()
@@ -20,12 +20,16 @@ def lambda_handler(event, context):
     try:
         dest_folder = "gold"
 
-        output_path = f"s3://{bucket}/{dest_folder}"
+        output_path = f"s3://{bucket}/nav/{dest_folder}"
         logger.info(f'{output_path=}')
         input_path = f's3://{bucket}/{key}'
         logger.info(f'{input_path=}')
 
-        calculate_stock_metrics(input_path, output_path, logger)
+        # differentiate transformations based on the type of data
+        if key.find('nav') != -1:
+            calculate_cef_metrics(input_path, output_path, logger)
+        else:
+            calculate_stock_metrics(input_path, output_path, logger)
         return {
             "statusCode": 200,
             "headers": {

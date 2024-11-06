@@ -9,7 +9,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 
 ### To pull data from Yahoo finance :
 - python stock_data_pull.py --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
-  - period is one of the following values : '1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'
+  - see NOTES below on period param
 ### To clean data :
 - python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
 ### To calculate metrics :
