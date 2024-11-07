@@ -8,7 +8,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - can persist data to local or existing S3 buckets. I follow the bronze/silver/gold paradigm 
 
 ### To pull data from Yahoo finance :
-- python stock_data_pull.py --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
   - see NOTES below on period param
 ### To clean data :
 - python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
@@ -17,6 +17,10 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 
 ## NOTES:
 - see [yfinance](https://github.com/ranaroussi/yfinance) docs for general info on using the module
+- for nav data for CEF's, we call yfinance with and 'X' on both sides of the ticker
+  - eg : XDSLX, XAWFX
+  - this will cause the NAV (net asset value) to be populated in the 'Close' field and is how we get NAV data for CEF's
+  - pricing and nav data go to separate prefixes named 'price' and 'nav'
 - see [Ticker class](https://github.com/ranaroussi/yfinance/wiki/Ticker#interface) for valid values for period arg above
 - S3 paths seem to be recognized and credentials picked up automagically using the s3fs module
   - assuming you have credentials set up in ~/.aws
@@ -78,11 +82,18 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     - Ability to view as percentage growth, div growth vs price growth for instance
     - STD Dev lines
     - Quicksight or tableau?
+- Stock metadata
+  - can be used for calcs, or to know which calcs apply (NAV and premium/discount apply to CEFs, we might have bond specific or stock specific calcs in the future)
+  - type : stock, bond, CEF
+  - average NAV all-time
+  - average div yield all-time
+  - div schedule
+  - last updated date for the above
 - More Calculations/Features
     - stock technical indicators (maybe : https://github.com/ta-lib/ta-lib-python)
     - CEF NAV discount for various time periods
     - update 1 yr, 5 yr, overall calcs for each and store somewhere
-    - Historical CAPE, VIX, etc
+    - Global indicators, M2, CAPE, VIX, etc
     - Historical PE for individual stocks
     - Overall gains for a period taking divs into account
 - Store silver/gold data in database?

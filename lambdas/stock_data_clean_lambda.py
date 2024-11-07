@@ -1,46 +1,53 @@
 import json
 import logging
+import awswrangler as wr
 from urllib.parse import unquote_plus
-from stock_data_clean import clean_price_data, clean_cef_data
-from utils import get_symbol_from_full_path
+from stock_data_clean import clean_price_data
+from utils import get_symbol_from_full_path, get_prefix_from_full_path, get_period_from_full_path
 
-logger = logging.getLogger()
-logger.setLevel("INFO")
+logger = logging.getLogger(__name__)
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 
 def lambda_handler(event, context):
-    print("entered lambda handler")
     logger.info("Received event: " + json.dumps(event, indent=2))
 
     record = event['Records'][0]
     bucket = record['s3']['bucket']['name']
-    logger.info(f'{bucket=}')
+    logger.debug(f'{bucket=}')
     key = unquote_plus(record['s3']['object']['key'])
-    logger.info(f'{key=}')
+    logger.debug(f'{key=}')
 
     try:
         dest_folder = "silver"
 
-        output_path = f"s3://{bucket}/{dest_folder}"
-        logger.info(f'{output_path=}')
+        output_base_path = f"s3://{bucket}/{dest_folder}"
         input_path = f's3://{bucket}/{key}'
         logger.info(f'{input_path=}')
+        df = wr.s3.read_parquet(input_path)
 
-        if key.find('cefs') != -1:
-            clean_cef_data(input_path, output_path, logger)
+        # differentiate transformations based on the type of data
+        if key.find('nav') != -1:
+            cleaned_df = clean_price_data(df, 'nav')
         else:
-            clean_price_data(input_path, output_path, logger)
+            cleaned_df = clean_price_data(df, 'price')
+
+        symbol = get_symbol_from_full_path(input_path)
+        period = get_period_from_full_path(input_path)
+        sub_prefix = get_prefix_from_full_path(input_path) # type specific subprefix
+        full_output_path = f"{output_base_path}/{sub_prefix}/{symbol}_{period}_cleaned.parquet"
+        logger.info(f'writing cleaned data to {full_output_path}')
+
+        response = wr.s3.to_parquet(cleaned_df, path=full_output_path, index=True)
+        logger.debug(f'{response=}')
 
         return {
             "statusCode": 200,
             "headers": {
                 "Content-Type": "application/json"
             },
-            "body":f"Successfuly saved stock metrics data for ${get_symbol_from_full_path(input_path)}"
+            "body":f"Successfuly cleaned stock data for ${symbol}"
         }
     except Exception as e:
-        logger.info(e)
-        logger.info(
-            'Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(
-                key, bucket))
+        logger.info("An exception occurred cleaning stock data: ", e)
         raise e
