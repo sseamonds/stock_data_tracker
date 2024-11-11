@@ -5,12 +5,13 @@ from urllib.parse import unquote_plus
 from stock_data_clean import clean_price_data
 from utils import get_symbol_from_full_path, get_prefix_from_full_path, get_period_from_full_path
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
+# can't do custom logging config in lambda afaik
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
-    logger.info("Received event: " + json.dumps(event, indent=2))
+    logger.debug("Received event: " + json.dumps(event, indent=2))
 
     record = event['Records'][0]
     bucket = record['s3']['bucket']['name']
@@ -19,18 +20,13 @@ def lambda_handler(event, context):
     logger.debug(f'{key=}')
 
     try:
-        dest_folder = "silver"
-
+        dest_folder = "silver/stock"
         output_base_path = f"s3://{bucket}/{dest_folder}"
         input_path = f's3://{bucket}/{key}'
         logger.info(f'{input_path=}')
-        df = wr.s3.read_parquet(input_path)
 
-        # differentiate transformations based on the type of data
-        if key.find('nav') != -1:
-            cleaned_df = clean_price_data(df, 'nav')
-        else:
-            cleaned_df = clean_price_data(df, 'price')
+        df = wr.s3.read_parquet(input_path)
+        cleaned_df = clean_price_data(df, 'price')
 
         symbol = get_symbol_from_full_path(input_path)
         period = get_period_from_full_path(input_path)

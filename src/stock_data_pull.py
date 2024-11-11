@@ -1,12 +1,13 @@
 import yfinance as yf
 import argparse as ap
 import logging
-import awswrangler as wr
 
 
 def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
     Pull specified history for symbol and save to dest_path
+    Uses history function which adjusts closing price for splits and dividends.
+    This dataset will be used for dividends, volume, splits, and volume data.
 
     :param stock_symbol:
     :param file_dest:
@@ -16,11 +17,30 @@ def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
     stock = yf.Ticker(stock_symbol)
     hist = stock.history(period=period)
-    
-    logger.info(f'writing raw stock data for {stock_symbol} to {file_dest}')
-
+    logger.info(f'Writing historical stock data for {stock_symbol} to {file_dest}')
     hist.to_parquet(file_dest, index=True)
 
+
+def get_yahoo_price_data(stock_symbol, file_dest, period='1d'):
+    """
+    Pull closing price history using the download() method which does not
+    adjust for dividends and splits, thus giving the actual price 
+    for symbol and save to dest_path.
+
+    When passing in a stock equity (VOO, AAPL, etc) or CEF stock symbol (ex. DSL or AWF), 
+        this will return the unadjusted stock price in the Close field.
+    When passing in a CEF alt symbol (ex. XDSLX or XAWFX), 
+        this will return the NAV price in the Close field.
+
+    :param stock_symbol:
+    :param file_dest:
+    :param period:
+
+    :return:
+    """
+    price_df = yf.download(stock_symbol, period=period)
+    logger.info(f'writing stock price data for {stock_symbol} to {file_dest}')
+    price_df.to_parquet(file_dest, index=True)
 
 def parse_arg():
     """
@@ -30,7 +50,7 @@ def parse_arg():
 
     parser.add_argument("--stock_symbol", type=str, required=True)
     parser.add_argument("--dest_path", type=str, required=True)
-    parser.add_argument("--type", type=str, choices=['nav', 'price'], required=True)
+    parser.add_argument("--type", type=str, choices=['nav', 'price', 'hist'], required=True)
     parser.add_argument("--period", type=str, default='1d')
 
     params = vars(parser.parse_args())
@@ -51,12 +71,15 @@ if __name__ == '__main__':
     args = parse_arg()
 
     dest_path_arg = args['dest_path']
-    period_arg = args.get('period', '1d')
+    period_arg = args.get('period')
     stock_symbol_arg = args['stock_symbol']
     type_arg = args['type']
 
-    full_dest_path = f"{dest_path_arg}/{type_arg}/{stock_symbol_arg}_{period_arg}_historical.parquet"
+    full_dest_path = f"{dest_path_arg}/{type_arg}/{stock_symbol_arg.replace("X","")}_{period_arg}.parquet"
 
-    get_yahoo_historical(stock_symbol_arg,
-                         full_dest_path,
-                         period_arg)
+    if type_arg == 'price' or type_arg == 'nav':
+        get_yahoo_price_data(stock_symbol_arg,full_dest_path,period_arg)
+    elif type_arg == 'hist':
+        get_yahoo_historical(stock_symbol_arg,full_dest_path,period_arg)
+    else:
+        raise ValueError(f"Invalid type argument: {type_arg}")

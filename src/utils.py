@@ -11,7 +11,8 @@ def get_symbol_from_full_path(full_path: str) -> str:
 
 
 def get_period_from_full_path(full_path: str) -> str:
-    path_elements = os.path.split(full_path)
+    file_name_minus_extension = full_path.split(".")[0]
+    path_elements = os.path.split(file_name_minus_extension)
     file_name_split = path_elements[len(path_elements) - 1].split("_")
 
     return file_name_split[1]
@@ -19,7 +20,6 @@ def get_period_from_full_path(full_path: str) -> str:
 
 def get_prefix_from_full_path(full_path):
     full_path_list = full_path.split("/")
-    
     return full_path_list[len(full_path_list)-2]
 
 

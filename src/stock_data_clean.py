@@ -2,6 +2,22 @@ import pandas as pd
 import numpy as np
 
 
+def clean_hist_data(df: pd.DataFrame):
+    # TODO : finish and test this when we get to dividends and other fields
+    return_df = df.copy()
+    drop_cols = ["Open", "High", "Low", "Close"]
+    return_df.drop(columns=set.intersection(set(drop_cols), set(return_df.columns)), inplace=True)
+    return_df.index = pd.to_datetime(return_df.index.strftime('%Y-%m-%d'))
+
+    # fill dividends to be the most recent distribution
+    return_df.loc[df['Dividends'] == 0, ['Dividends']] = np.nan
+    return_df['dividends_filled'] = return_df['Dividends'].bfill(inplace=False)
+    return_df['dividends_filled'] = return_df['dividends_filled'].ffill(inplace=False)
+    return_df.drop(columns=['Dividends'], inplace=True)  
+    
+    return return_df
+
+
 def clean_price_data(df: pd.DataFrame, type: str):
     """
     Price and Div data from yahoo.
@@ -10,27 +26,28 @@ def clean_price_data(df: pd.DataFrame, type: str):
 
     :return: None
     """
-    drop_cols = ['Capital Gains', 'High', 'Low', 'Open', 'Stock Splits']
+    return_df = df.copy()
+    # only price from this dataset
+    drop_cols = ['High', 'Low', 'Open', 'Adj Close', 'Volume']
     
-    df.drop(columns=set.intersection(set(drop_cols), set(df.columns)), inplace=True)
+    return_df.drop(columns=set.intersection(set(drop_cols), set(df.columns)), inplace=True)
 
     # Converting the original datetime to just a date.
     # For now there is no need for a timestamp, just a date
-    df.index = pd.to_datetime(df.index.strftime('%Y-%m-%d'))
+    return_df.index = pd.to_datetime(return_df.index.strftime('%Y-%m-%d'))
+    return_df.rename(columns={"Close": "closing_price"}, inplace=True)      
 
-    if type == 'price':
-        df.rename(columns={"Close": "closing_price"}, inplace=True)
-        # fill dividends to be the most recent distribution
-        df.loc[df['Dividends'] == 0, ['Dividends']] = np.nan
-        df['dividends_filled'] = df['Dividends'].bfill(inplace=False)
-        df['dividends_filled'] = df['dividends_filled'].ffill(inplace=False)
-        df.drop(columns=['Dividends'], inplace=True)
-        
-        df.rename(columns={"Volume": "volume"}, inplace=True)
-    else:
-        # there will be a corresponding price dataset for each CEF, 
-        # so only nav for nav dataset
-        df.drop(columns=['Volume', 'Dividends'], inplace=True)
-        df.rename(columns={"Close": "nav"}, inplace=True)
+    return return_df
 
-    return df
+
+def clean_cef_data(cef_price_df: pd.DataFrame, cef_nav_df: pd.DataFrame):
+    cef_price_df_cleaned = clean_price_data(cef_price_df, 'price')
+    
+    # Path for CEF's with XnnnX format tickers (XDSLX, XAWFX, etc)
+    # There will be a corresponding price dataset for each CEF, only nav for this dataset
+    cef_nav_df_cleaned = clean_price_data(cef_nav_df, 'price')
+    cef_nav_df_cleaned.rename(columns={"closing_price": "nav"}, inplace=True)
+
+    joined_df = cef_nav_df_cleaned.join(cef_price_df_cleaned)
+    
+    return joined_df
