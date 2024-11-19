@@ -14,6 +14,8 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
 ### To calculate metrics :
 - python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+### To Query/Insert into RDS locally (must make RDS publicly accessible):
+python src/rds_functions_runnable.py --action query|insert
 
 ## NOTES:
 - see [yfinance](https://github.com/ranaroussi/yfinance) docs for general info on using the module
@@ -73,7 +75,22 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     ]
   }
 ```
-
+- For the lambda to write high level stock metrics to RDS :
+  - Setup RDS:
+    - create an instance
+    - connect to an EC2 instance to perform psql actions
+    - connect to the lambda described below
+    - create table using sql/create_stock_tables.sql
+  - Setup the Lambda
+    - use lambdas/stock_metrics_lambda.py
+    - upload utils.py, rds_functions.py, and stock_metrics.py
+    - run the scripts/build_psycopg_layer.sh to generate a psycopg layer in the form of a zip file 
+    - add the psycopg zip as a layer and attach to the lambda
+    - attach to the same VPC as the RDS instance
+    - setup an VPC endpoint for S3 (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
+    - ensure the right security groups are attached with the VPC
+      - for me it was the SG for the rds instance (outbound) and the default group (to allow to connect to S3)
+ 
 
 ## Future plans:
 - BI views, visualization for gold data
@@ -82,7 +99,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
     - Ability to view as percentage growth, div growth vs price growth for instance
     - STD Dev lines
     - Quicksight or tableau?
-- Stock metadata
+- Stock metadata (it's setup, but need more fields)
   - can be used for calcs, or to know which calcs apply (NAV and premium/discount apply to CEFs, we might have bond specific or stock specific calcs in the future)
   - type : stock, bond, CEF
   - average NAV all-time

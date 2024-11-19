@@ -3,7 +3,7 @@ import logging
 import awswrangler as wr
 from urllib.parse import unquote_plus
 from stock_data_calcs import calculate_stock_metrics, calculate_cef_metrics
-from utils import get_symbol_from_full_path, get_period_from_full_path, get_prefix_from_full_path
+from utils import get_symbol_from_full_path, get_period_from_full_path
 
 # can't do custom logging config in lambda afaik
 logger = logging.getLogger()
@@ -15,9 +15,7 @@ def lambda_handler(event, context):
 
     record = event['Records'][0]
     bucket = record['s3']['bucket']['name']
-    logger.debug(f'{bucket=}')
     key = unquote_plus(record['s3']['object']['key'])
-    logger.debug(f'{key=}')
 
     try:
         input_path = f's3://{bucket}/{key}'
@@ -49,5 +47,5 @@ def lambda_handler(event, context):
             "body":f"Successfuly saved stock metrics data for ${symbol}"
         }
     except Exception as e:
-        logger.info("An exception occurred generating calculations for stock data: ", e)
+        logger.info(f"An exception occurred generating calculations for stock data: {e}")
         raise e

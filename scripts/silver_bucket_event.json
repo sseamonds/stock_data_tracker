@@ -1,0 +1,14 @@
+{
+    "Records": [
+      {
+        "s3": {
+          "bucket": {
+            "name": "sdt-stock-data"
+          },
+          "object": {
+            "key": "silver/price/VOO_1y_cleaned.parquet"
+          }
+        }
+      }
+    ]
+  }

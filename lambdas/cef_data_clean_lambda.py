@@ -74,7 +74,7 @@ def lambda_handler(event, context):
         logger.info(f'writing cleaned data to {full_output_path}')
 
         response = wr.s3.to_parquet(cleaned_df, path=full_output_path, index=True)
-        logger.info(f'Done writing cleaned data: {response=}')
+        logger.debug(f'Done writing cleaned data: {response=}')
 
         return {
             "statusCode": 200,
@@ -84,5 +84,5 @@ def lambda_handler(event, context):
             "body":f"Successfuly cleaned stock data for ${symbol}"
         }
     except Exception as e:
-        logger.info("An exception occurred cleaning stock data: ", e)
+        logger.error(f"An exception occurred cleaning stock data: {e}")
         raise e

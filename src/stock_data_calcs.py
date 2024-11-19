@@ -40,7 +40,6 @@ def calculate_cef_metrics(df: pd.DataFrame):
     :return: DataFrame with calculated metrics
     """
     return_df = df.copy()
-    print(return_df.columns)
     
     # price metrics
     return_df['price_moving_avg_20'] = np.round(return_df['closing_price'].rolling(20, min_periods=1).mean(), 2)
@@ -50,7 +49,6 @@ def calculate_cef_metrics(df: pd.DataFrame):
     # nav metrics
     return_df['nav_discount_premium'] = return_df.apply(lambda r: round((r.closing_price-r.nav)/r.nav, 4), axis=1)
     return_df['nav_discount_premium_moving_avg_1yr'] = np.round(return_df['nav_discount_premium'].rolling(260, min_periods=1).mean(), 4)
-    return_df['nav_discount_premium_avg_alltime'] = np.round(return_df['nav_discount_premium'].mean(), 4)
 
     return_df['nav_moving_avg_20'] = np.round(return_df['nav'].rolling(20, min_periods=1).mean(), 2)
     return_df['nav_moving_avg_60'] = np.round(return_df['nav'].rolling(60, min_periods=1).mean(), 2)

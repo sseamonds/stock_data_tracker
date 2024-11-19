@@ -45,5 +45,5 @@ def lambda_handler(event, context):
             "body":f"Successfuly cleaned stock data for ${symbol}"
         }
     except Exception as e:
-        logger.info("An exception occurred cleaning stock data: ", e)
+        logger.info(f"An exception occurred cleaning stock data: {e}")
         raise e
