@@ -2,7 +2,6 @@ import configparser
 import sys
 import os
 
-
 def get_symbol_from_full_path(full_path: str) -> str:
     path_elements = os.path.split(full_path)
     file_name_split = path_elements[len(path_elements) - 1].split("_")

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import stock_functions as sf
 
 def calculate_hist_metrics(df: pd.DataFrame):
     """

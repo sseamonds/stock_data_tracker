@@ -8,7 +8,7 @@ import awswrangler as wr
 from urllib.parse import unquote_plus
 from utils import get_symbol_from_full_path
 from rds_functions import insert_stock_metrics
-from stock_data_calcs import get_nav_metrics_from_df
+from stock_metrics import get_nav_metrics_from_df
 
 # Configure logging
 logger = logging.getLogger(__name__)

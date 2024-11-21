@@ -3,7 +3,6 @@ import numpy as np
 
 
 def clean_hist_data(df: pd.DataFrame):
-    # TODO : finish and test this when we get to dividends and other fields
     return_df = df.copy()
     drop_cols = ["Open", "High", "Low", "Close"]
     return_df.drop(columns=set.intersection(set(drop_cols), set(return_df.columns)), inplace=True)
@@ -18,7 +17,7 @@ def clean_hist_data(df: pd.DataFrame):
     return return_df
 
 
-def clean_price_data(df: pd.DataFrame, type: str):
+def clean_price_data(df: pd.DataFrame):
     """
     Price and Div data from yahoo.
     Convert dates, rename cols, fill divs
@@ -30,7 +29,9 @@ def clean_price_data(df: pd.DataFrame, type: str):
     # only price from this dataset
     drop_cols = ['High', 'Low', 'Open', 'Adj Close', 'Volume']
     
-    return_df.drop(columns=set.intersection(set(drop_cols), set(df.columns)), inplace=True)
+    return_df.drop(columns=set.intersection(set(drop_cols), 
+                                            set(df.columns)), 
+                                            inplace=True)
 
     # Converting the original datetime to just a date.
     # For now there is no need for a timestamp, just a date
@@ -41,13 +42,14 @@ def clean_price_data(df: pd.DataFrame, type: str):
 
 
 def clean_cef_data(cef_price_df: pd.DataFrame, cef_nav_df: pd.DataFrame):
-    cef_price_df_cleaned = clean_price_data(cef_price_df, 'price')
+    cef_price_df_cleaned = clean_price_data(cef_price_df)
     
     # Path for CEF's with XnnnX format tickers (XDSLX, XAWFX, etc)
     # There will be a corresponding price dataset for each CEF, only nav for this dataset
-    cef_nav_df_cleaned = clean_price_data(cef_nav_df, 'price')
+    cef_nav_df_cleaned = clean_price_data(cef_nav_df)
     cef_nav_df_cleaned.rename(columns={"closing_price": "nav"}, inplace=True)
 
-    joined_df = cef_nav_df_cleaned.join(cef_price_df_cleaned)
-    
+    joined_df = cef_nav_df_cleaned.join(cef_price_df_cleaned, how='inner')
+    joined_df.dropna(inplace=True)
+
     return joined_df

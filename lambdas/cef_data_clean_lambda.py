@@ -27,11 +27,11 @@ def lambda_handler(event, context):
         
         # ensure both source files exist, otherwise do nothing
         if '/price/' in key:
-            cef_price_df = wr.s3.read_parquet(input_path)
+            price_df = wr.s3.read_parquet(input_path)
             cef_nav_path = input_path.replace('/price/', '/nav/')
 
             if wr.s3.does_object_exist(cef_nav_path):
-                cef_nav_df = wr.s3.read_parquet(cef_nav_path)
+                nav_df = wr.s3.read_parquet(cef_nav_path)
             else:
                 return {
                     "statusCode": 204,
@@ -41,11 +41,11 @@ def lambda_handler(event, context):
                     "body":f"Corresponding nav data not found for {key}.  No action taken."  
                 }
         elif '/nav/' in key:
-            cef_nav_df = wr.s3.read_parquet(input_path)
+            nav_df = wr.s3.read_parquet(input_path)
             cef_price_path = input_path.replace('/nav/', '/price/')
 
             if wr.s3.does_object_exist(cef_price_path):
-                cef_price_df = wr.s3.read_parquet(cef_price_path)
+                price_df = wr.s3.read_parquet(cef_price_path)
             else:
                 logger.info(f'corresponding price path: {cef_price_path} does not exist')
                 return {
@@ -65,7 +65,7 @@ def lambda_handler(event, context):
                 "body":f"Invalid path format path: {key}.  No action taken."  
             }
 
-        cleaned_df = clean_cef_data(cef_nav_df, cef_price_df)
+        cleaned_df = clean_cef_data(price_df, nav_df)
 
         symbol = get_symbol_from_full_path(input_path)
         period = get_period_from_full_path(input_path)

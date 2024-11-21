@@ -40,7 +40,7 @@ if __name__ == "__main__":
         df2 = pd.read_parquet(input_path2)
         df_cleaned = clean_cef_data(df, df2)
     else:
-        df_cleaned = clean_price_data(df, type)
+        df_cleaned = clean_price_data(df)
 
     symbol = get_symbol_from_full_path(input_path)
     period = get_period_from_full_path(input_path)
