@@ -9,14 +9,21 @@ import pandas as pd
 # Load the environment variables from the .env file
 load_dotenv()
 
+# Configure logging
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
+logger = logging.getLogger(__name__)
+
 # rds settings
 user_name = os.environ['USER_NAME']
 password = os.environ['PASSWORD']
 rds_host = os.environ['RDS_HOST']
 db_name = os.environ['DB_NAME']
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')

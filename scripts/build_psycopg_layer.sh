@@ -15,4 +15,4 @@ cd ..
 zip -r psycopg2-layer.zip $layer_dir
 
 # clean up
-rm -rf $layer_dir
+#rm -rf $layer_dir

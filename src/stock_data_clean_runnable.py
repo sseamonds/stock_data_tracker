@@ -44,9 +44,6 @@ if __name__ == "__main__":
 
     symbol = get_symbol_from_full_path(input_path)
     period = get_period_from_full_path(input_path)
-    logger.info(f'{input_path=}')
-    logger.info(f'{period=}')
-    logger.info(f'{symbol=}')
     full_output_path = f"{output_path}/{type}/{symbol}_{period}_cleaned.parquet"
     
     logger.info(f'writing cleaned data to {full_output_path}')

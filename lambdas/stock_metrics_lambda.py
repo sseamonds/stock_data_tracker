@@ -11,12 +11,14 @@ from rds_functions import insert_stock_metrics
 from stock_metrics import get_nav_metrics_from_df
 
 # Configure logging
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):

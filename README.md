@@ -1,3 +1,7 @@
+TODO: details on new lambda, RDS, env vars
+- mention python/lib/python3.6/site-packages dir structure
+
+
 # stock_data_tracker
 Simple data eng project to practice some AWS flows using stock ticker data.
 

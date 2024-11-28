@@ -3,12 +3,14 @@ import logging
 import psycopg2
 
 # Configure logging
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 
 def get_metrics_by_stock(stock, user_name, password, rds_host, db_name) -> dict:
@@ -16,6 +18,8 @@ def get_metrics_by_stock(stock, user_name, password, rds_host, db_name) -> dict:
     col2 = "nav_discount_avg_alltime"
     table_name = "stock_metrics"
 
+    conn = None
+    cur = None
     try:
         conn = psycopg2.connect(
             host=rds_host,
@@ -34,8 +38,8 @@ def get_metrics_by_stock(stock, user_name, password, rds_host, db_name) -> dict:
         return None
     except Exception as error:
         logger.error(f"An error occurred querying : {error}")
-        return None
-    finally:
+        if cur:
+            cur.close()
         if conn:
             conn.close()
         if cur:
@@ -44,6 +48,9 @@ def get_metrics_by_stock(stock, user_name, password, rds_host, db_name) -> dict:
 
 def insert_stock_metrics(stock:str, nav_discount_avg_1y:float, nav_discount_avg_alltime:float, 
                          user_name:str, password:str, rds_host:str, db_name:str):
+    conn = None
+    cur = None
+
     try:
         conn = psycopg2.connect(
             host=rds_host,

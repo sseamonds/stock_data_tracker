@@ -1,26 +1,53 @@
-# builds psycopg2 layer for AWS Lambda
-# see: https://medium.com/@bloggeraj392/creating-a-psycopg2-layer-for-aws-lambda-a-step-by-step-guide-a2498c97c11e
+# builds yfinance layer for AWS Lambda
 
-# create a directory for the psycopg2 layer
+# create a directory for the yfinance layer
 layer_dir="yfinance-layer"
-# if [ -d "$layer_dir" ]; then
-#     rm -rf "$layer_dir"
-# fi
-# mkdir -p "$layer_dir"
 if [ -d "$layer_dir" ]; then
     rm -rf "$layer_dir"/*
 else
     mkdir -p "$layer_dir"
 fi
-cd "$layer_dir"
+# store the currently active virtual environment
+current_venv="$VIRTUAL_ENV"
 
-# build for for x86_64
-pip install --platform manylinux2014_x86_64 --target . --python-version 3.12 --only-binary=:all: yfinance
-# build for for arm64
-# pip3 install --platform manylinux2014_aarch64 --target . --python-version 3.12 --only-binary=:all: yfinance
+# deactivate any active virtual environment
+# if [ -n "$VIRTUAL_ENV" ]; then
+#     echo "deactivating virtual environment: $VIRTUAL_ENV"
+#     deactivate
+# fi
+echo "current_venv: $current_venv"
 
-cd ..
-zip -r yfinance-layer.zip $layer_dir
+# create a temporary virtual environment
+temp_venv="temp_venv"
+python -m venv $temp_venv
+source $temp_venv/bin/activate
+# build for x86_64
+pip install --platform manylinux2014_x86_64 --target $layer_dir --only-binary=:all: yfinance
+#--python-version 3.12
+#pip install --platform manylinux2014_x86_64 --target $layer_dir --only-binary=:all: yfinance
+
+# deactivate and remove the temporary virtual environment
+deactivate
+rm -rf $temp_venv
+
+# remove unnecessary files to reduce size
+find $layer_dir -name "*.dist-info" -exec rm -rf {} +
+find $layer_dir -name "*.egg-info" -exec rm -rf {} +
+find $layer_dir -type d -name "tests" -exec rm -rf {} +
+find $layer_dir -name "__pycache__" -exec rm -rf {} +
+
+# create the necessary directory structure for AWS Lambda
+python_dir="python/lib/python3.12/site-packages/"
+mkdir -p $python_dir # create the directory if it doesn't exist
+rm -rf $python_dir/* # clear the directory
+mv $layer_dir/* $python_dir
+
+# create the zip file
+rm -f yfinance-layer.zip
+zip -r yfinance-layer.zip python
 
 # clean up
-#rm -rf $layer_dir
+rm -rf $python_dir
+rm -rf $layer_dir
+
+source $current_venv/bin/activate

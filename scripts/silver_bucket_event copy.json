@@ -1,0 +1,14 @@
+{
+    "Records": [
+      {
+        "s3": {
+          "bucket": {
+            "name": "sdt-stock-data"
+          },
+          "object": {
+            "key": "gold/cef/AWF_1y.parquet"
+          }
+        }
+      }
+    ]
+  }
