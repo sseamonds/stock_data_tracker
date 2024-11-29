@@ -22,12 +22,18 @@ db_name = os.environ['DB_NAME']
 
 def lambda_handler(event, context):
     logger.info("Received event: " + json.dumps(event, indent=2))
+    message = json.loads(event['Records'][0]['body'])
+    stock_symbol = message['stock_symbol']
+    current_premium_discount = message['current_premium_discount']
+    logger.debug(f'Checking discount for {stock_symbol} with current premium/discount of {current_premium_discount}')
 
-    record = event['Records'][0]
-    stock_sybol = record['stock']
-    current_premium_discount = record['current_premium_discount']
-    logger.info(f'Checking discount for {stock_sybol} with current premium/discount of {current_premium_discount}')
-
-    check_current_cef_discount(stock_sybol, current_premium_discount, 
+    check_current_cef_discount(stock_symbol, current_premium_discount, 
                                user_name, password, rds_host, db_name)
-
+    
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": "Success"
+    }

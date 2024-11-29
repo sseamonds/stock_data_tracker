@@ -9,22 +9,14 @@ else
 fi
 # store the currently active virtual environment
 current_venv="$VIRTUAL_ENV"
-
-# deactivate any active virtual environment
-# if [ -n "$VIRTUAL_ENV" ]; then
-#     echo "deactivating virtual environment: $VIRTUAL_ENV"
-#     deactivate
-# fi
 echo "current_venv: $current_venv"
 
-# create a temporary virtual environment
+# create a temporary virtual environment, to avoid conflicts with the current environment
 temp_venv="temp_venv"
 python -m venv $temp_venv
 source $temp_venv/bin/activate
 # build for x86_64
 pip install --platform manylinux2014_x86_64 --target $layer_dir --only-binary=:all: yfinance
-#--python-version 3.12
-#pip install --platform manylinux2014_x86_64 --target $layer_dir --only-binary=:all: yfinance
 
 # deactivate and remove the temporary virtual environment
 deactivate

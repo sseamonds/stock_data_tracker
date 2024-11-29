@@ -6,13 +6,11 @@ layer_dir="psycopg2-layer"
 mkdir -p "$layer_dir"
 cd "$layer_dir"
 
-# build for for x86_64
+# build for for x86_64, if running on linux , you probably don't need the platform flag
 pip3 install --platform manylinux2014_x86_64 --target . --python-version 3.12 --only-binary=:all: psycopg2-binary
-# build for for arm64
-# pip3 install --platform manylinux2014_aarch64 --target . --python-version 3.12 --only-binary=:all: psycopg2-binary
 
 cd ..
 zip -r psycopg2-layer.zip $layer_dir
 
 # clean up
-#rm -rf $layer_dir
+rm -rf $layer_dir

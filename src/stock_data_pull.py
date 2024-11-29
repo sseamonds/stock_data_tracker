@@ -3,7 +3,6 @@ import argparse as ap
 import logging
 
 
-
 def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
     Pull specified history for symbol and save to dest_path

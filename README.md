@@ -1,7 +1,3 @@
-TODO: details on new lambda, RDS, env vars
-- mention python/lib/python3.6/site-packages dir structure
-
-
 # stock_data_tracker
 Simple data eng project to practice some AWS flows using stock ticker data.
 
@@ -10,6 +6,9 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - using pandas for transforms
 - can be in command line or in pycharm with Run Configuration args
 - can persist data to local or existing S3 buckets. I follow the bronze/silver/gold paradigm 
+- persisting latest agg metrics to RDS
+- checking current nav discount against agg metrics
+  - for instance checking if the current NAV discount is lower than the year average
 
 ### To pull data from Yahoo finance :
 - python stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
@@ -36,10 +35,9 @@ python src/rds_functions_runnable.py --action query|insert
 #### Setting up with S3-based triggers for lambdas will cause the cleaning and calcs scripts to run when you put a new raw stock file in the s3://<base_bucket>/bronze/ folder. 
 - This can be done manually OR via stock_data_pull.py as described above but with an S3 destination
 #### To setup lambdas for each process: 
-- Create a lambda and 'Deploy' the code : cope the lambdas/*.py file, the corresponding src/stock_data_*./py file and the utils.py to the lambda
-  - do this for each process, currently there are two lambdas for cleaning and calcs
+- Create a lambda and 'Deploy' the code : copy the lambdas/*.py file and all imported corresponding src/stock_data_*./py file or utils.py files to the lambda
   - Up your timeout (default is 3 seconds, I did a minute, currently the scripts run in 20 seconds or less)
-- Create a trigger for each lambda :
+- Create a trigger for lambdas which operate on files :
   - service : S3
   - event type : All object create events
   - bucket : your source data bucket (I use sdt-stock-data)
@@ -94,31 +92,47 @@ python src/rds_functions_runnable.py --action query|insert
     - setup an VPC endpoint for S3 (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
     - ensure the right security groups are attached with the VPC
       - for me it was the SG for the rds instance (outbound) and the default group (to allow to connect to S3)
+- For lambdas which hit yfinance
+  - use scripts/build_yfinance_layer.sh to build a yfinance layer
+  - add the layer to the lambda
+  - note that the zip should have "python/lib/python3.6/site-packages" as it's base dir
+    - though it didn't seem to matter for the psycopg2 layer
+- For lambdas which write to SQS:
+  - create an SQS queue
+  - create a role with policies to allow writing to SQS
+    - I used the AWS managed policy AWSLambdaBasicExecutionRole and made a new policy allowing "sqs:SendMessage" actions for the SQS queue
+    - trust relationship for "lambda.amazonaws.com" with action "sts:AssumeRole"
+- For lambdas which read from SQS:
+  - Create a role which allows consuming from sqs
+    - I used the AWS managed policies AWSLambdaBasicExecutionRole and AWSLambdaSQSQueueExecutionRole
+    - trust relationship for "lambda.amazonaws.com" with action "sts:AssumeRole"
+  - add a trigger based on the SQS queue
  
 
 ## Future plans:
 - BI views, visualization for gold data
-    - Multiple metrics at once, nav/price for instance
-    - Ability to change timescale as needed
-    - Ability to view as percentage growth, div growth vs price growth for instance
-    - STD Dev lines
-    - Quicksight or tableau?
-- Stock metadata (it's setup, but need more fields)
-  - can be used for calcs, or to know which calcs apply (NAV and premium/discount apply to CEFs, we might have bond specific or stock specific calcs in the future)
+  - Multiple metrics at once, nav/price for instance
+  - Ability to change timescale as needed
+  - Ability to view as percentage growth, div growth vs price growth for instance
+  - STD Dev lines
+  - Quicksight or tableau? Athena?
+- Stock metadata 
   - type : stock, bond, CEF
   - average NAV all-time
   - average div yield all-time
-  - div schedule
+  - div schedule, used to properly calculate yield
   - last updated date for the above
 - More Calculations/Features
     - stock technical indicators (maybe : https://github.com/ta-lib/ta-lib-python)
-    - CEF NAV discount for various time periods
+    - full logic for calculating div yield
     - update 1 yr, 5 yr, overall calcs for each and store somewhere
     - Global indicators, M2, CAPE, VIX, etc
     - Historical PE for individual stocks
     - Overall gains for a period taking divs into account
 - Store silver/gold data in database?
-    - point BI tool here
+    - For BI dashboards
+    - also for time series analysis
+    - also for recalculating agg metrics on a periodic basis
     - or would OTF or parquet work with Athena or BI tool?
 - Alerts
     - stock goes above/below moving avg

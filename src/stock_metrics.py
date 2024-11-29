@@ -26,7 +26,7 @@ def check_current_cef_discount(stock:str, curr_prem_disc:float,
     Validate current premium/discount for a stock against its 1 year and all time averages
     '''
     stock_info = rf.get_metrics_by_stock(stock, user_name, password, rds_host, db_name)
-    logger.info(f'{stock_info=}')
+    logger.debug(f'{stock_info=}')
 
     if curr_prem_disc:
         if stock_info:
