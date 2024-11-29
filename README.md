@@ -21,6 +21,7 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 python src/rds_functions_runnable.py --action query|insert
 
 ## NOTES:
+- see docs/stock_tracker_overview.png for high level flow diagram
 - see [yfinance](https://github.com/ranaroussi/yfinance) docs for general info on using the module
 - for nav data for CEF's, we call yfinance with and 'X' on both sides of the ticker
   - eg : XDSLX, XAWFX
