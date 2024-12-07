@@ -29,24 +29,29 @@ def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--action', choices=['query', 'insert'], help='Action to perform')
     args = parser.parse_args()
+    stock_symbol = args.stock_symbol
 
     if args.action == 'query':
         logger.info("Performing query action")
-        # Add your query logic here
-        return_val = get_metrics_by_stock("AWF", user_name, password, rds_host, db_name)
+
+        return_val = get_metrics_by_stock(stock_symbol, user_name, password, rds_host, db_name)
         logger.info(f'{return_val=}')
     elif args.action == 'insert':
         logger.info("Performing insert action")
 
-        calc_df = pd.read_parquet('/Users/seanseamonds/Downloads/AWF_1y.parquet')
-        logger.info(f'{calc_df=}')
+        if not args.input_file:
+            logger.error("input_file argument is required for insert action")
+            return
+
+        input_file = args.input_file
+        calc_df = pd.read_parquet(input_file)
+        logger.debug(f'{calc_df=}')
         nav_discount_avg_1y = calc_df.tail(1)['nav_discount_premium_moving_avg_1yr'][0]
         logger.info(f'{nav_discount_avg_1y=}')
         nav_discount_avg_alltime = np.round(calc_df['nav_discount_premium'].mean(), 4)
         logger.info(f'{nav_discount_avg_alltime=}')
 
-        # Add your insert logic here
-        insert_stock_metrics("MSFT", nav_discount_avg_1y, nav_discount_avg_alltime, user_name, password, rds_host, db_name)
+        insert_stock_metrics(stock_symbol, nav_discount_avg_1y, nav_discount_avg_alltime, user_name, password, rds_host, db_name)
 
 if __name__ == "__main__":
     main()

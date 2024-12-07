@@ -39,6 +39,7 @@ def lambda_handler(event, context):
             if wr.s3.does_object_exist(cef_nav_path):
                 nav_df = wr.s3.read_parquet(cef_nav_path)
             else:
+                logger.info(f'corresponding nav path: {cef_nav_path} does not exist')
                 return {
                     "statusCode": 204,
                     "headers": {

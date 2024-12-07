@@ -1,0 +1,22 @@
+CEF pull
+python src/stock_data_pull.py --type price --stock_symbol AWF --period=1y --dest_path s3://sdt-data/bronze/cef
+python src/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1y --dest_path s3://sdt-data/bronze/cef
+
+python src/stock_data_pull.py --type price --stock_symbol BST --period=1y --dest_path s3://sdt-data/bronze/cef
+python src/stock_data_pull.py --type nav --stock_symbol XBSTX --period=1y --dest_path s3://sdt-data/bronze/cef
+
+CEF clean 
+python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path s3:\\sdt-data
+
+python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+
+
+stock pull
+python src/stock_data_pull.py --type price --stock_symbol VOO --period=1y --dest_path s3://sdt-data/bronze/stock
+
+Stock clean 
+python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path s3:\\sdt-data
+
+python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+
+python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>

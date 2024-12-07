@@ -1,3 +1,6 @@
+'''Get current metrics for a cef from yfinance, 
+write to SQS queue for further processing'''
+
 import json
 import logging
 import os
@@ -16,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event, context):
-    '''Get current metrics for a cef, write to SQS queue'''
     logger.debug("Received event: " + json.dumps(event, indent=2))
 
     record = event['Records'][0]

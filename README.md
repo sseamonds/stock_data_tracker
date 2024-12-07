@@ -3,22 +3,32 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 
 ## Current State:
 - code for pulling, cleaning, and calculating a couple basic metrics for a stock ticker
-- using pandas for transforms
-- can be in command line or in pycharm with Run Configuration args
-- can persist data to local or existing S3 buckets. I follow the bronze/silver/gold paradigm 
-- persisting latest agg metrics to RDS
-- checking current nav discount against agg metrics
-  - for instance checking if the current NAV discount is lower than the year average
+  - using pandas for transforms
+  - Can be run in command line or in PyCharm/VSCode/etc with Run Configuration args
+- Can persist data to local or existing S3 buckets. I follow the bronze/silver/gold paradigm 
+- Persisting latest agg metrics for a stock to RDS
+- Checking current nav discount against agg metrics
+  - for instance, checking if the current NAV discount is lower than the yearly average NAV discount
+  - in a Lambda, run manually
 
 ### To pull data from Yahoo finance :
 - python stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
   - see NOTES below on period param
+  - Example for CEF
+    - python src/stock_data_pull.py --type price --stock_symbol AWF --period=1y --dest_path s3://sdt-stock-data/bronze/cef
+    - python src/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1y --dest_path s3://sdt-stock-data/bronze/cef
+  - Example for stock
+    - python src/stock_data_pull.py --type price --stock_symbol VOO --period=1y --dest_path s3://sdt-stock-data/bronze/stock
+  - dest_path should be of format <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 ### To clean data :
 - python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+  - Lambda trigger should be set to <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 ### To calculate metrics :
 - python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
-### To Query/Insert into RDS locally (must make RDS publicly accessible):
-python src/rds_functions_runnable.py --action query|insert
+- Lambda trigger should be set to <s3_silver_path>
+### To Query/Insert stock metrics into RDS locally (must make RDS publicly accessible):
+python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock_ticker>
+  - for CEFs, cef_data_clean_lambda.py is designed to only run when both price and nav files exist. it will clean and merge them
 
 ## NOTES:
 - see docs/stock_tracker_overview.png for high level flow diagram
@@ -36,14 +46,15 @@ python src/rds_functions_runnable.py --action query|insert
 #### Setting up with S3-based triggers for lambdas will cause the cleaning and calcs scripts to run when you put a new raw stock file in the s3://<base_bucket>/bronze/ folder. 
 - This can be done manually OR via stock_data_pull.py as described above but with an S3 destination
 #### To setup lambdas for each process: 
-- Create a lambda and 'Deploy' the code : copy the lambdas/*.py file and all imported corresponding src/stock_data_*./py file or utils.py files to the lambda
-  - Up your timeout (default is 3 seconds, I did a minute, currently the scripts run in 20 seconds or less)
+- Create a lambda and 'deploy' the code : copy the lambdas/*.py file and all imported dependency src/*.py files to the lambda
+  - Up your timeout (default is 3 seconds, I did a minute, currently the scripts typically run in 30 seconds or less)
 - Create a trigger for lambdas which operate on files :
   - service : S3
   - event type : All object create events
   - bucket : your source data bucket (I use sdt-stock-data)
   - prefix : any subfolders (I use bronze/ and silver/ for my clean and calcs lambdas)
   - this will automatically add a [resource-based policy](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) allowing S3 to invoke your lambda function
+    - or you can choose en existing role with a cloudWatch log policy, S3 write policy and select it
 - Add a layer for awswrangler/pandas
   - I use 'AWSSDKPandas-Python312' which is one of the available options when adding a layer
   - the layer should contain any non-core python modules that you'd need
@@ -71,8 +82,8 @@ python src/rds_functions_runnable.py --action query|insert
                 "s3:*"
             ],
             "Resource": [
-                "arn:aws:s3:::sdt-stock-data",
-                "arn:aws:s3:::sdt-stock-data/*"
+                "arn:aws:s3:::<your_s3_bucket>",
+                "arn:aws:s3:::<your_s3_bucket>/*"
             ]
         }
     ]

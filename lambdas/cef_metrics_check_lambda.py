@@ -1,3 +1,4 @@
+"""Receive current metrics for a stock from SQS and check the current premium/discount."""
 import json
 import logging
 import os

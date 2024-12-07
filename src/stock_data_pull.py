@@ -7,7 +7,7 @@ def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
     Pull specified history for symbol and save to dest_path
     Uses history function which adjusts closing price for splits and dividends.
-    This dataset will be used for dividends, volume, splits, and volume data.
+    This dataset will be used for dividends, splits, and volume data.
 
     :param stock_symbol:
     :param file_dest:
