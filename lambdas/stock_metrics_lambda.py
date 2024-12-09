@@ -47,20 +47,29 @@ def lambda_handler(event, context):
 
             nav_discount_avg_1y, nav_discount_avg_alltime = get_nav_metrics_from_df(calc_df)
 
-            insert_stock_metrics(symbol, nav_discount_avg_1y, nav_discount_avg_alltime, 
+            insert_return_value = insert_stock_metrics(symbol, nav_discount_avg_1y, nav_discount_avg_alltime, 
                                  user_name, password, rds_host, db_name) 
-            logger.info(f'inserted stock metrics data for {symbol}')
+            if insert_return_value:
+                logger.info(f'inserted stock metrics data for {symbol}')
+                return {
+                    "statusCode": 200,
+                    "headers": {
+                        "Content-Type": "application/json"
+                        },
+                        "body":f"Successfuly saved stock metrics data for ${symbol}"
+                    }
+            else:
+                logger.error(f'Failed to insert stock metrics data for {symbol}')
+                return {
+                    "statusCode": 500,
+                    "headers": {
+                        "Content-Type": "application/json"
+                        },
+                        "body":f"Successfuly saved stock metrics data for ${symbol}"
+                    }
         else:
             # eventually we'll support stock path, but not now
             raise ValueError(f"Invalid path format: {key}")
-
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json"
-            },
-            "body":f"Successfuly saved stock metrics data for ${symbol}"
-        }
     except Exception as e:
         logger.info(f"An exception occurred generating calculations for stock data: {e}")
         return {

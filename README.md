@@ -101,9 +101,17 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
     - run the scripts/build_psycopg_layer.sh to generate a psycopg layer in the form of a zip file 
     - add the psycopg zip as a layer and attach to the lambda
     - attach to the same VPC as the RDS instance
-    - setup an VPC endpoint for S3 (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
+    - setup a VPC endpoint for S3 access (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
+      - SEE : https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html
+	    - type : AWS services
+	    - Service Name : com.amazonaws.us-west-2.s3
+		    - or similar name depending on your region
+		    - Type : pick the gateway option
+	    - VPC : same VPC that Lambda is attached to already
+	    - Policy : Full access, or define your own more granular VP endpoint policy
+      - Post creation : Go to VPC Endpoints, pick the one you just created, and add a VPC route table (I already had a private one for RDS, and used that one)
     - ensure the right security groups are attached with the VPC
-      - for me it was the SG for the rds instance (generated when adding a Lambda to the RDS instance, named something like lambda-rds-1)
+      - for me it was the SG for the rds instance (generated when adding a Lambda to the RDS instance, named something like "lambda-rds-1")
       - if the Lambda consumes from S3 you need the default SG.  A Lambda doesn't normalyl need this for S3 access, but one with a VPC attached does need it
 - For lambdas which hit yfinance
   - use scripts/build_yfinance_layer.sh to build a yfinance layer

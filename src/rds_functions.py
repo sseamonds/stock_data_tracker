@@ -47,7 +47,7 @@ def get_metrics_by_stock(stock, user_name, password, rds_host, db_name) -> dict:
         
 
 def insert_stock_metrics(stock:str, nav_discount_avg_1y:float, nav_discount_avg_alltime:float, 
-                         user_name:str, password:str, rds_host:str, db_name:str):
+                         user_name:str, password:str, rds_host:str, db_name:str)->bool:
     conn = None
     cur = None
 
@@ -71,10 +71,14 @@ def insert_stock_metrics(stock:str, nav_discount_avg_1y:float, nav_discount_avg_
         logger.info(f"Record inserted for stock: {stock}")
     except psycopg2.DatabaseError as db_error:
         logger.error(f"Database error: {db_error}")
+        return False
     except Exception as error:
+        return False
         logger.error(f"An error occurred inserting : {error}")
     finally:
         if conn:
             conn.close()
         if cur:
             cur.close()
+
+    return True
