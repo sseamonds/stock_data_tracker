@@ -89,7 +89,7 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
     ]
   }
 ```
-- For the lambda to write high level stock metrics to RDS :
+- For the lambda to write high level stock metrics to RDS (and consume from S3):
   - Setup RDS:
     - create an instance
     - connect to an EC2 instance to perform psql actions
@@ -103,7 +103,8 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
     - attach to the same VPC as the RDS instance
     - setup an VPC endpoint for S3 (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
     - ensure the right security groups are attached with the VPC
-      - for me it was the SG for the rds instance (outbound) and the default group (to allow to connect to S3)
+      - for me it was the SG for the rds instance (generated when adding a Lambda to the RDS instance, named something like lambda-rds-1)
+      - if the Lambda consumes from S3 you need the default SG.  A Lambda doesn't normalyl need this for S3 access, but one with a VPC attached does need it
 - For lambdas which hit yfinance
   - use scripts/build_yfinance_layer.sh to build a yfinance layer
   - add the layer to the lambda

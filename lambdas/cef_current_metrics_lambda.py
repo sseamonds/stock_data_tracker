@@ -26,7 +26,7 @@ def lambda_handler(event, context):
 
     logger.info(f'Checking discount for {stock_symbol}')
     current_premium_discount = sdf.get_current_cef_discount(stock_symbol)
-    logger.debug(f'Discount for {stock_symbol} is {current_premium_discount}')
+    logger.info(f'Discount for {stock_symbol} is {current_premium_discount}')
     
     if current_premium_discount:
         # Create SQS client

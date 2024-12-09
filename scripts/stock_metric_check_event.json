@@ -1,7 +1,7 @@
 {
   "Records": [
       {
-          "stock": "AWF"
+          "body": "{\"stock_symbol\": \"BST\", \"current_premium_discount\": -0.0676}"
       }
   ]
 }
