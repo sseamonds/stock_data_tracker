@@ -128,7 +128,39 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
     - I used the AWS managed policies AWSLambdaBasicExecutionRole and AWSLambdaSQSQueueExecutionRole
     - trust relationship for "lambda.amazonaws.com" with action "sts:AssumeRole"
   - add a trigger based on the SQS queue
- 
+## Dockerization of Lambdas:
+Capability has been added for and tested on one lambda, lambdas/cef_data_clean_lambdas.py.  
+I might in the future do this for the remaining lambdas. For now the Dockerfile is for cef_data_clean_lambdas.py, though it would be easy to adjust for any other lambda by running COPY for the desired lambda file and all related dependencies
+Ideally we could genericize the process to run for any local lambda without altering the Dockerfile
+### To build and run the docker image locally:
+- From the base directory build the docker image :
+  - `docker build --no-cache --platform linux/amd64 -t cef-clean-image:test .`
+    - `--platform linux/amd64` is necessary for Mac environments
+      - you will likely get an "invalid entrypoint" error if this is left out, on local and on AWS
+- Start the lambda as a container locally:
+  - see : https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base
+  - run container pulling creds ENV vars from local .aws/credentials file :
+	- `docker run --mount type=bind,source=$HOME/.aws/credentials,target=/root/.aws/credentials  -e AWS_REGION=us-west-2 --platform linux/amd64 -p 9000:8080 cef-clean-image:test`
+- test the lambda by hitting it as a service with a payload :
+  - `curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d "{\"Records\": [{\"s3\": {\"bucket\": {\"name\": \"sdt-stock-data\"},\"object\": {\"key\": \"bronze/cef/nav//AWF_1y.parquet\"}}}]}"`
+### Setting up in ECR:
+1. get ECR login password:
+`aws ecr get-login-password --region <region_where_lambda_exists> | docker login --username AWS --password-stdin <your_account_number>.dkr.ecr.<your_region>.amazonaws.com`
+  - Should see "Login Succeeded" in console
+
+[OPTIONAL] Create repo if you haven't already:
+`aws ecr create-repository --repository-name <repo_namespace>/<repo_name> --region <lambda_region>> --image-scanning-configuration scanOnPush=true --image-tag-mutability MUTABLE`
+2. build your docker image (if already built for local testing above, skip this step):
+NOTE: for MAC you need the "--platform linux/amd64" flag, if building on linux you will not need it
+docker build --platform linux/amd64 -t sdt/cef_data_clean_lambda .
+docker build --platform linux/amd64 -t <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_namespace>/<repo_name>:latest .
+3. tag your image :
+docker tag sdt/cef_data_clean_lambda:latest <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_namespace>/<repo_name>:latest
+  - using tag 'latest' will make this build the latest, erasing tags of the previous image.  You can instead use a numbering or versioning scheme to keep each new build's tag unique
+4. push docker image to ECR:
+docker push <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_namespace>/<repo_name>:latest
+5. Check your ECR repo for this image
+6. test the lambda in AWS with a payload like the one for the local test above
 
 ## Future plans:
 - BI views, visualization for gold data
@@ -168,6 +200,4 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
   - current discount, pe, relation to 50/200 day avg and other indicators, etc
 - Observations by the hour/minute
   - stream in, recheck alerts
-- Containerize and automate with AWS batch, if load increases or maybe just for learning's sake
-- DuckDB, Pyspark, ??? for silver -> gold transform if pandas can't handle the load
 - LSTM predictive model

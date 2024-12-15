@@ -1,0 +1,14 @@
+{
+    "Records": [
+      {
+        "s3": {
+          "bucket": {
+            "name": "sdt-data"
+          },
+          "object": {
+            "key": "bronze/cef/nav/AWF_1y.parquet"
+          }
+        }
+      }
+    ]
+  }
