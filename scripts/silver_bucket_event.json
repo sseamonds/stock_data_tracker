@@ -1,14 +1,14 @@
 {
-    "Records": [
-      {
-        "s3": {
-          "bucket": {
-            "name": "sdt-stock-data"
-          },
-          "object": {
-            "key": "silver/price/VOO_1y_cleaned.parquet"
-          }
+  "Records": [
+    {
+      "s3": {
+        "bucket": {
+          "name": "sdt-data"
+        },
+        "object": {
+          "key": "silver/cef/nav/AWF_1y.parquet"
         }
       }
-    ]
-  }
+    }
+  ]
+}

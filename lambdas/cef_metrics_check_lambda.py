@@ -22,7 +22,7 @@ db_name = os.environ['DB_NAME']
 
 
 def lambda_handler(event, context):
-    logger.info("Received event: " + json.dumps(event, indent=2))
+    logger.debug("Received event: " + json.dumps(event, indent=2))
     message = json.loads(event['Records'][0]['body'])
     stock_symbol = message['stock_symbol']
     current_premium_discount = message['current_premium_discount']

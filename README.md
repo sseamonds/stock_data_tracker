@@ -161,6 +161,13 @@ docker tag sdt/cef_data_clean_lambda:latest <your_account_number>.dkr.ecr.<your_
 docker push <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_namespace>/<repo_name>:latest
 5. Check your ECR repo for this image
 6. test the lambda in AWS with a payload like the one for the local test above
+### To schedule daily checks
+- EventBridge Rule, schedule type, with cron format something like : 0 22 ? * 2-6 *
+- target lambda : current_stock_metrics
+- pass message to current_stock_metrics lambda of format:
+		{"Records": [{"stock": "AWF"}]}
+- current_stock_metrics which will get the current nav/price and send the premium/discount to the cef_metrics_check lambda
+- cef_metrics_check will log to CloudWatch if values exceed values from RDS
 
 ## Future plans:
 - BI views, visualization for gold data
@@ -188,9 +195,6 @@ docker push <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_name
     - also for recalculating agg metrics on a periodic basis
     - or would OTF or parquet work with Athena or BI tool?
 - Alerts
-    - stock goes above/below moving avg
-    - CEF nav discount above/below 1 year, multi-year, all-time average 
-    - other tech indicator thresholds
     - email, sms?
 - Auto update
     - daily pull of individual metrics for each stock

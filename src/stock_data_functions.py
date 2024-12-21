@@ -22,7 +22,7 @@ def get_current_cef_discount(stock_symbol:str) -> float:
     """
     Pull current stock data for symbol and return the date of the most recent data point
     """
-    logger.info('entering get_current_cef_discount: ' + stock_symbol)
+
     try:
         stock = yf.Ticker(stock_symbol)
         cef_stock = stock_cef(stock_symbol)

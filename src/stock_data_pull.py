@@ -17,8 +17,11 @@ def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
     stock = yf.Ticker(stock_symbol)
     hist = stock.history(period=period)
-    logger.info(f'Writing historical stock data for {stock_symbol} to {file_dest}')
-    hist.to_parquet(file_dest, index=True)
+    if hist:
+        logger.info(f'Writing historical stock data for {stock_symbol} to {file_dest}')
+        hist.to_parquet(file_dest, index=True)
+    else:
+        logger.error(f'No historical data found for {stock_symbol} in period {period}')
 
 
 def get_yahoo_price_data(stock_symbol, file_dest, period='1d'):
@@ -39,8 +42,14 @@ def get_yahoo_price_data(stock_symbol, file_dest, period='1d'):
     :return:
     """
     price_df = yf.download(stock_symbol, period=period)
-    logger.info(f'writing stock price data for {stock_symbol} to {file_dest}')
-    price_df.to_parquet(file_dest, index=True)
+    logger.debug(f'price_df.shape: {price_df.shape}')
+    
+    if not price_df.empty:
+        logger.info(f'writing stock price data for {stock_symbol} to {file_dest}')
+        price_df.to_parquet(file_dest, index=True)
+    else:
+        logger.error(f'No price data found for {stock_symbol} in period {period}')
+
 
 def parse_arg():
     """
