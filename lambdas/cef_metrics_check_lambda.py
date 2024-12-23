@@ -20,16 +20,28 @@ password = os.environ['PASSWORD']
 rds_host = os.environ['RDS_HOST']
 db_name = os.environ['DB_NAME']
 
+alert_mode = os.getenv('ALERT_MODE', default = 'LOG')
 
 def lambda_handler(event, context):
     logger.debug("Received event: " + json.dumps(event, indent=2))
     message = json.loads(event['Records'][0]['body'])
     stock_symbol = message['stock_symbol']
     current_premium_discount = message['current_premium_discount']
-    logger.debug(f'Checking discount for {stock_symbol} with current premium/discount of {current_premium_discount}')
+    logger.debug(f'Checking discount for {stock_symbol} with current premium/discount of {current_premium_discount}.  {alert_mode=}')
 
-    check_current_cef_discount(stock_symbol, current_premium_discount, 
-                               user_name, password, rds_host, db_name)
+    try:
+        check_current_cef_discount(stock_symbol, current_premium_discount, 
+                                   user_name, password, rds_host, db_name,
+                                   alert_mode=alert_mode)
+    except Exception as e:
+        logger.error(f'Error checking discount for {stock_symbol}: {e}')
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": "Error"
+        }
     
     return {
         "statusCode": 200,

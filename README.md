@@ -168,6 +168,20 @@ docker push <your_account_number>.dkr.ecr.<your_region>.amazonaws.com/<repo_name
 		{"Records": [{"stock": "AWF"}]}
 - current_stock_metrics which will get the current nav/price and send the premium/discount to the cef_metrics_check lambda
 - cef_metrics_check will log to CloudWatch if values exceed values from RDS
+### To log alerts to SNS for cef_metrics_check lambda :
+1. create security group allowing all inbound access for VPC CIDR (if doesn't exist)
+2. New VPC Endpoint for SNS (necessary for a Lambda which is in a VPC as cef_metrics_check is)
+	- pick same VPC lambda is in
+	- pick 'AWS Services' and SNS url in desired region (for example : sns.us-west-2.amazonaws.com)
+	- Security Groups : attach SG from step 1
+	- subnets : at least one private subnet in the same VPC as the lambda
+	- Endpoint type will be 'Interface' by default
+3. Create Security group which allows HTTP traffic from VPC CIDR as well
+	- attach to Lambda
+3. associate default security group to endpoint
+4. SNS access policy added to lambda role
+5. set ALERT_MODE to 'SNS' to publish to SNS and enter a topic arn for the SNS_TOPIC env var
+
 
 ## Future plans:
 - BI views, visualization for gold data
