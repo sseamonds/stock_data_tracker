@@ -85,43 +85,6 @@ def upsert_stock_metrics(stock: str, nav_discount_avg_1y: float, nav_discount_av
     return True
 
 
-def upsert_stock_metrics(stock: str, nav_discount_avg_1y: float, nav_discount_avg_alltime: float, db_params: dict) -> bool:
-    conn = None
-    cur = None
-
-    try:
-        conn = psycopg2.connect(
-            host=db_params["rds_host"],
-            user=db_params["user_name"],
-            password=db_params["password"],
-            database=db_params["db_name"]
-        )
-
-        cur = conn.cursor()
-        sql_string = """
-            INSERT INTO stock_metrics (stock, nav_discount_avg_1y, nav_discount_avg_alltime)
-            VALUES (%s, %s, %s)
-        """
-        logger.debug(f"sql_string: {sql_string}")
-
-        cur.execute(sql_string, (stock, nav_discount_avg_1y, nav_discount_avg_alltime))
-        conn.commit()
-        logger.info(f"Record inserted for stock: {stock}")
-    except psycopg2.DatabaseError as db_error:
-        logger.error(f"Database error: {db_error}")
-        return False
-    except Exception as error:
-        logger.error(f"An error occurred inserting : {error}")
-        return False
-    finally:
-        if conn:
-            conn.close()
-        if cur:
-            cur.close()
-
-    return True
-
-
 def insert_stock_history(df: pd.DataFrame, symbol: str, db_params: dict) -> bool:
     try:
         logger.debug(f"Inserting data for symbol: {symbol}")
