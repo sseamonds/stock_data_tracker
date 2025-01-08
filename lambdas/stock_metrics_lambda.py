@@ -7,7 +7,7 @@ import os
 import awswrangler as wr
 from urllib.parse import unquote_plus
 from utils import get_symbol_from_full_path
-from rds_functions import insert_stock_metrics
+from rds_functions import upsert_stock_metrics
 from stock_metrics import get_nav_metrics_from_df
 
 # Configure logging
@@ -47,7 +47,7 @@ def lambda_handler(event, context):
 
             nav_discount_avg_1y, nav_discount_avg_alltime = get_nav_metrics_from_df(calc_df)
 
-            insert_return_value = insert_stock_metrics(symbol, nav_discount_avg_1y, nav_discount_avg_alltime, 
+            insert_return_value = upsert_stock_metrics(symbol, nav_discount_avg_1y, nav_discount_avg_alltime, 
                                  user_name, password, rds_host, db_name) 
             if insert_return_value:
                 logger.info(f'inserted stock metrics data for {symbol}')

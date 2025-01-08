@@ -5,7 +5,7 @@ import logging
 
 def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
-    Pull specified history for symbol and save to dest_path
+    Pull specified history for symbol and save to output_path
     Uses history function which adjusts closing price for splits and dividends.
     This dataset will be used for dividends, splits, and volume data.
 
@@ -28,7 +28,7 @@ def get_yahoo_price_data(stock_symbol, file_dest, period='1d'):
     """
     Pull closing price history using the download() method which does not
     adjust for dividends and splits, thus giving the actual price 
-    for symbol and save to dest_path.
+    for symbol and save to output_path.
 
     When passing in a stock equity (VOO, AAPL, etc) or CEF stock symbol (ex. DSL or AWF), 
         this will return the unadjusted stock price in the Close field.
@@ -58,7 +58,7 @@ def parse_arg():
     parser = ap.ArgumentParser()
 
     parser.add_argument("--stock_symbol", type=str, required=True)
-    parser.add_argument("--dest_path", type=str, required=True)
+    parser.add_argument("--output_path", type=str, required=True)
     parser.add_argument("--type", type=str, choices=['nav', 'price', 'hist'], required=True)
     parser.add_argument("--period", type=str, default='1d')
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     """
     command line args:
         --stock_symbol : symbol of stock whose data to pull from yfinance
-        --dest_path : base path to write output file
+        --output_path : base path to write output file
         --period : (optional) yfinance arg defining the time period of data to pull
     """
     logger = logging.getLogger(__name__)
@@ -79,16 +79,16 @@ if __name__ == '__main__':
 
     args = parse_arg()
 
-    dest_path_arg = args['dest_path']
+    output_path_arg = args['output_path']
     period_arg = args.get('period')
     stock_symbol_arg = args['stock_symbol']
     type_arg = args['type']
 
-    full_dest_path = f"{dest_path_arg}/{type_arg}/{stock_symbol_arg.replace("X","")}_{period_arg}.parquet"
+    full_output_path = f"{output_path_arg}/{type_arg}/{stock_symbol_arg.replace("X","")}_{period_arg}.parquet"
 
     if type_arg == 'price' or type_arg == 'nav':
-        get_yahoo_price_data(stock_symbol_arg,full_dest_path,period_arg)
+        get_yahoo_price_data(stock_symbol_arg,full_output_path,period_arg)
     elif type_arg == 'hist':
-        get_yahoo_historical(stock_symbol_arg,full_dest_path,period_arg)
+        get_yahoo_historical(stock_symbol_arg,full_output_path,period_arg)
     else:
         raise ValueError(f"Invalid type argument: {type_arg}")

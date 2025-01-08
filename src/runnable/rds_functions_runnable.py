@@ -2,7 +2,7 @@ import logging
 import os
 from dotenv import load_dotenv
 import argparse
-from rds_functions import insert_stock_metrics, get_metrics_by_stock
+from rds_functions import upsert_stock_metrics, get_current_metrics_by_stock
 import numpy as np
 import pandas as pd
 
@@ -34,7 +34,7 @@ def main():
     if args.action == 'query':
         logger.info("Performing query action")
 
-        return_val = get_metrics_by_stock(stock_symbol, user_name, password, rds_host, db_name)
+        return_val = get_current_metrics_by_stock(stock_symbol, user_name, password, rds_host, db_name)
         logger.info(f'{return_val=}')
     elif args.action == 'insert':
         logger.info("Performing insert action")
@@ -51,7 +51,7 @@ def main():
         nav_discount_avg_alltime = np.round(calc_df['nav_discount_premium'].mean(), 4)
         logger.info(f'{nav_discount_avg_alltime=}')
 
-        insert_stock_metrics(stock_symbol, nav_discount_avg_1y, nav_discount_avg_alltime, user_name, password, rds_host, db_name)
+        upsert_stock_metrics(stock_symbol, nav_discount_avg_1y, nav_discount_avg_alltime, user_name, password, rds_host, db_name)
 
 if __name__ == "__main__":
     main()

@@ -47,7 +47,7 @@ def clean_cef_data(cef_price_df: pd.DataFrame, cef_nav_df: pd.DataFrame):
     # Path for CEF's with XnnnX format tickers (XDSLX, XAWFX, etc)
     # There will be a corresponding price dataset for each CEF, only nav for this dataset
     cef_nav_df_cleaned = clean_price_data(cef_nav_df)
-    cef_nav_df_cleaned.rename(columns={"closing_price": "nav"}, inplace=True)
+    cef_nav_df_cleaned.rename(columns={"closing_price": "closing_nav"}, inplace=True)
 
     joined_df = cef_nav_df_cleaned.join(cef_price_df_cleaned, how='inner')
     joined_df.dropna(inplace=True)

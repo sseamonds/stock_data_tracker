@@ -10,25 +10,32 @@ Simple data eng project to practice some AWS flows using stock ticker data.
 - Checking current nav discount against agg metrics
   - for instance, checking if the current NAV discount is lower than the yearly average NAV discount
   - in a Lambda, run manually
-
+- IN PROGRESS : writing historical price/nav and historical metrics to RDS
 ### To pull data from Yahoo finance :
-- python stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --output_path <LOCAL_OR_S3_PATH>
   - see NOTES below on period param
   - Example for CEF
-    - python src/stock_data_pull.py --type price --stock_symbol AWF --period=1y --dest_path s3://sdt-stock-data/bronze/cef
-    - python src/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1y --dest_path s3://sdt-stock-data/bronze/cef
+    - python src/stock_data_pull.py --type price --stock_symbol AWF --period=1y --output_path s3://sdt-stock-data/bronze/cef
+    - python src/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1y --output_path s3://sdt-stock-data/bronze/cef
   - Example for stock
-    - python src/stock_data_pull.py --type price --stock_symbol VOO --period=1y --dest_path s3://sdt-stock-data/bronze/stock
-  - dest_path should be of format <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
+    - python src/stock_data_pull.py --type price --stock_symbol VOO --period=1y --output_path s3://sdt-stock-data/bronze/stock
+  - output_path should be of format <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 ### To clean data :
-- python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
   - Lambda trigger should be set to <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 ### To calculate metrics :
-- python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --dest_path <LOCAL_OR_S3_PATH>
+- python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
 - Lambda trigger should be set to <s3_silver_path>
-### To Query/Insert stock metrics into RDS locally (must make RDS publicly accessible):
-python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock_ticker>
-  - for CEFs, cef_data_clean_lambda.py is designed to only run when both price and nav files exist. it will clean and merge them
+### To Query/Insert stock metrics into RDS locally :
+1. RDS instance must be on a subnet group with public subnets.
+- NOTE: If the RDS instance was created on a private subnet group, this cannot be changed after the fact and you'd need to create a new instance or new VPC (with public subnets) and switch to that!!!
+2. Need a security group attached to the RDS instance which allows inbound Postgres/TCP/5432 access from your IP
+3. RDS's VPC must have an internet gateway
+4. route table has entry for destination : 0.0.0.0/0 and target <internet gateway attached to your VPC>
+see:
+	- https://repost.aws/knowledge-center/rds-connectivity-instance-subnet-vpc
+	- https://medium.com/overlander/connecting-to-rds-from-local-over-tcp-operation-timed-out-5cfc819f402c
+
 
 ## NOTES:
 - see docs/stock_tracker_overview.png for high level flow diagram
@@ -128,6 +135,7 @@ python src/rds_functions_runnable.py --action query|insert --stock_symbol <stock
     - I used the AWS managed policies AWSLambdaBasicExecutionRole and AWSLambdaSQSQueueExecutionRole
     - trust relationship for "lambda.amazonaws.com" with action "sts:AssumeRole"
   - add a trigger based on the SQS queue
+- for CEFs, cef_data_clean_lambda.py is designed to only run when both price and nav files exist. it will clean and merge them
 ## Dockerization of Lambdas:
 Capability has been added for and tested on one lambda, lambdas/cef_data_clean_lambdas.py.  
 I might in the future do this for the remaining lambdas. For now the Dockerfile is for cef_data_clean_lambdas.py, though it would be easy to adjust for any other lambda by running COPY for the desired lambda file and all related dependencies
