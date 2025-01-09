@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import argparse as ap
 import logging
 import pandas as pd
-from rds_functions import insert_stock_history
+from rds_functions import save_stock_history
 from utils import get_symbol_from_full_path, get_period_from_full_path, get_prefix_from_full_path
 from stock_data_clean import clean_price_data, clean_cef_data
 import time
@@ -15,11 +15,11 @@ from dotenv import load_dotenv
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
 
-# rds settings
-user_name = os.environ['USER_NAME']
-password = os.environ['PASSWORD']
-rds_host = os.environ['RDS_HOST']
-db_name = os.environ['DB_NAME']
+# postgres settings
+db_params = {'RDS_HOST': os.environ['RDS_HOST'], 
+            'USER_NAME': os.environ['USER_NAME'], 
+            'PASSWORD': os.getenv('PASSWORD',None), 
+            'DB_NAME': os.environ['DB_NAME']}
 
 def parse_arg():
     """
@@ -30,7 +30,7 @@ def parse_arg():
     parser.add_argument("--input_path", type=str, required=True)
     parser.add_argument("--input_path2", type=str)
     parser.add_argument("--output_path", type=str, required=True)
-    parser.add_argument("--type", type=str, choices=['price', 'nav', 'hist'], required=True)
+    parser.add_argument("--type", type=str, choices=['price', 'nav'], required=True)
 
     params = vars(parser.parse_args())
 
@@ -51,6 +51,8 @@ if __name__ == "__main__":
 
     df = pd.read_parquet(input_path)
     
+    # Here we explicitly pass on the two files to clean and merge
+    # In the lambda we look for the matching file based on the symbol/prefix
     if type == 'nav':
         input_path2 = args['input_path2']
         df_nav = pd.read_parquet(input_path2)
@@ -58,9 +60,7 @@ if __name__ == "__main__":
     else:
         df_cleaned = clean_price_data(df)
 
-    print("input_path: ", input_path)
     symbol = get_symbol_from_full_path(input_path)
-    print("symbol: ", symbol)
     period = get_period_from_full_path(input_path)
     full_output_path = f"{output_path}/{type}/{symbol}_{period}_cleaned.parquet"
     
@@ -71,11 +71,10 @@ if __name__ == "__main__":
 
     # write to RDS
     start_time = time.time()
-    insert_stock_history(df=df_cleaned, symbol=symbol, 
-                         db_params={'rds_host': rds_host, 
-                                    'user_name': user_name, 
-                                    'password': password, 
-                                    'db_name': db_name})
+    save_stock_history(df=df_cleaned, 
+                       symbol=symbol, 
+                       db_params=db_params)
+    
     end_time = time.time()
     execution_time = end_time - start_time
-    logger.info(f'insert_stock_history execution time: {execution_time} seconds')
+    logger.info(f'upsert_stock_history execution time: {execution_time} seconds')

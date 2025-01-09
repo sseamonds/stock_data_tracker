@@ -1,3 +1,6 @@
+"""Get historical stock data from DB, 
+calculate daily moving metrics and save to DB
+"""
 import json
 import logging
 import awswrangler as wr

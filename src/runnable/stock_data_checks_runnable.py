@@ -31,7 +31,7 @@ def main():
 
     curr_disc = get_current_cef_discount(args.stock)
     logger.info(f'Current discount for {args.stock} is {curr_disc}')
-    #check_current_cef_discount(args.stock, curr_disc, user_name, password, rds_host, db_name)
+    check_current_cef_discount(args.stock, curr_disc, user_name, password, rds_host, db_name)
 
 if __name__ == "__main__":
     main()

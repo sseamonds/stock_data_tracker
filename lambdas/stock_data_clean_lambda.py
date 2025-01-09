@@ -1,9 +1,12 @@
+import os
+import time
 import json
 import logging
 import awswrangler as wr
 from urllib.parse import unquote_plus
 from stock_data_clean import clean_price_data
 from utils import get_symbol_from_full_path, get_prefix_from_full_path, get_period_from_full_path
+from rds_functions import save_stock_history
 
 # Configure logging
 default_log_args = {
@@ -15,6 +18,10 @@ default_log_args = {
 logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
 
+user_name = os.environ['USER_NAME']
+password = os.environ['PASSWORD']
+rds_host = os.environ['RDS_HOST']
+db_name = os.environ['DB_NAME']
 
 def lambda_handler(event, context):
     logger.debug("Received event: " + json.dumps(event, indent=2))
@@ -42,6 +49,17 @@ def lambda_handler(event, context):
 
         response = wr.s3.to_parquet(cleaned_df, path=full_output_path, index=True)
         logger.debug(f'{response=}')
+
+        # Insert cleaned data into RDS
+        start_time = time.time()
+        save_stock_history(df=cleaned_df, symbol=symbol, 
+                             db_params={'rds_host': rds_host, 
+                                        'user_name': user_name, 
+                                        'password': password, 
+                                        'db_name': db_name})
+        end_time = time.time()
+        execution_time = end_time - start_time
+        logger.info(f'upsert_stock_history execution time: {execution_time} seconds')
 
         return {
             "statusCode": 200,

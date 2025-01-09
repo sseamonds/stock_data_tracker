@@ -1,8 +1,16 @@
 import argparse as ap
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import logging
-import pandas as pd
-from stock_data_calcs import calculate_stock_metrics, calculate_cef_metrics
-from utils import get_symbol_from_full_path, get_period_from_full_path
+from stock_data_calcs import calculate_cef_metrics
+from utils import get_period_from_full_path
+from rds_functions import get_stock_history, save_stock_metrics_history
+from dotenv import load_dotenv
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+load_dotenv(dotenv_path)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(encoding='utf-8', level=logging.INFO)
@@ -14,11 +22,9 @@ def parse_arg():
     """
     parser = ap.ArgumentParser()
 
-    parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--input_path2", type=str)
-    parser.add_argument("--output_path", type=str, required=True)
-    parser.add_argument("--type", type=str, choices=['price', 'nav'], 
-                        default='price', required=False)
+    parser.add_argument("--symbol", type=str, required=True)
+    parser.add_argument("--type", type=str, choices=['stock', 'cef'], 
+                        default='stock', required=False)
     
     params = vars(parser.parse_args())
 
@@ -27,20 +33,27 @@ def parse_arg():
 
 if __name__ == "__main__":
     args = parse_arg()
-    input_path = args['input_path']
-    output_path = args['output_path']
     type = args['type']
+    symbol = args['symbol']
+
+    # postgres settings
+    db_params = {'rds_host': os.environ['RDS_HOST'], 
+                'user_name': os.environ['USER_NAME'], 
+                'password': os.getenv('PASSWORD',None), 
+                'db_name': os.environ['DB_NAME']}
     
-    if type == 'nav':
-        df = pd.read_parquet(input_path)
+    if type == 'cef':
+        df = get_stock_history(symbol, db_params)
+        logger.info(f'after get_stock_history {df.columns=}')
+        logger.info(f'after get_stock_history :\n{df=}')
+
         calc_df = calculate_cef_metrics(df)
+        success = save_stock_metrics_history(calc_df, db_params)
+
+        if success:
+            logger.info(f'CEF metrics data saved to postgres for symbol {symbol}')
+        else:
+            logger.error(f'Error saving CEF metrics data to postgres for symbol {symbol}')
     else:
-        df = pd.read_parquet(input_path)
-        calc_df = calculate_stock_metrics(df)
-
-    symbol = get_symbol_from_full_path(input_path)
-    period = get_period_from_full_path(input_path)
-    full_output_path = f"{output_path}/{type}/{symbol}_{period}_calcs.parquet"
-
-    logger.info(f'writing metrics data to {full_output_path}')
-    calc_df.to_parquet(full_output_path, index=True)
+        logger.error(f'Invalid type: {type}')
+        pass # we will add stock metrics later

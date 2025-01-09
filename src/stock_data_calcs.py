@@ -26,7 +26,7 @@ def calculate_stock_metrics(df: pd.DataFrame):
     return_df = df.copy()
     # 20, 60, 200 day moving averages
     return_df['price_moving_avg_20'] = np.round(return_df['closing_price'].rolling(20, min_periods=1).mean(), 2)
-    return_df['price_moving_avg_60'] = np.round(return_df['closing_price'].rolling(60, min_periods=1).mean(), 2)
+    return_df['price_moving_avg_60d'] = np.round(return_df['closing_price'].rolling(60, min_periods=1).mean(), 2)
     return_df['price_moving_avg_1yr'] = np.round(return_df['closing_price'].rolling(260, min_periods=1).mean(), 2)
 
     return return_df
@@ -41,20 +41,13 @@ def calculate_cef_metrics(df: pd.DataFrame):
     return_df = df.copy()
     
     # price metrics
-    return_df['price_moving_avg_20'] = np.round(return_df['closing_price'].rolling(20, min_periods=1).mean(), 2)
-    return_df['price_moving_avg_60'] = np.round(return_df['closing_price'].rolling(60, min_periods=1).mean(), 2)
-    return_df['price_moving_avg_1yr'] = np.round(return_df['closing_price'].rolling(260, min_periods=1).mean(), 2)
+    return_df['price_avg_60d'] = np.round(return_df['closing_price'].rolling(60, min_periods=1).mean(), 2)
+    return_df['price_avg_1yr'] = np.round(return_df['closing_price'].rolling(260, min_periods=1).mean(), 2)
 
     # nav metrics
-    return_df['nav_discount_premium'] = return_df.apply(lambda r: round((r.closing_price-r.nav)/r.nav, 4), axis=1)
-    return_df['nav_discount_premium_moving_avg_1yr'] = np.round(return_df['nav_discount_premium'].rolling(260, min_periods=1).mean(), 4)
+    return_df['nav_discount_premium'] = return_df.apply(lambda r: round((r.closing_price-r.closing_nav)/r.closing_nav, 4), axis=1)
+    return_df['nav_discount_premium_avg_60d'] = np.round(return_df['nav_discount_premium'].rolling(60, min_periods=1).mean(), 4)
+    return_df['nav_discount_premium_avg_1yr'] = np.round(return_df['nav_discount_premium'].rolling(260, min_periods=1).mean(), 4)
 
-    return_df['nav_moving_avg_20'] = np.round(return_df['nav'].rolling(20, min_periods=1).mean(), 2)
-    return_df['nav_moving_avg_60'] = np.round(return_df['nav'].rolling(60, min_periods=1).mean(), 2)
-    return_df['nav_moving_avg_1yr'] = np.round(return_df['nav'].rolling(260, min_periods=1).mean(), 2)
-    return_df['nav_avg_alltime'] = np.round(return_df['nav'].mean(), 2)
-
+    return_df.drop(columns=['closing_nav', 'closing_price'], inplace=True)
     return return_df
-
-
-

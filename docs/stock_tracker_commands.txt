@@ -1,28 +1,24 @@
 CEF pull :
-python src/runnable/stock_data_pull.py --type price --stock_symbol JRS --period=1y --output_path s3://sdt-data/bronze/cef
-python src/runnable/stock_data_pull.py --type nav --stock_symbol XJRSX --period=1y --output_path s3://sdt-data/bronze/cef
+python src/runnable/stock_data_pull.py --type price --stock_symbol JRS --period=1mo --output_path s3://sdt-data/bronze/cef
+python src/runnable/stock_data_pull.py --type nav --stock_symbol XJRSX --period=1mo --output_path s3://sdt-data/bronze/cef
 
 local
-	python src/runnable/stock_data_pull.py --type price --stock_symbol AWF --period=5d --output_path data/cef 
+	python src/runnable/stock_data_pull.py --type price --stock_symbol AWF --period=1mo --output_path data/cef 
 	python src/runnable/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1mo --output_path data/cef 
 
 stock pull:
-python src/runnable/stock_data_pull.py --type price --stock_symbol VOO --period=1y --output_path s3://sdt-data/bronze/stock
+python src/runnable/stock_data_pull.py --type price --stock_symbol VOO --period=1mo --output_path s3://sdt-data/bronze/stock
 
 
 CEF clean :
-python src/runnable/stock_data_clean_runnable.py --type <nav or stock> --source_path <LOCAL_OR_S3_PATH> --output_path s3:\\sdt-data
-python src/runnable/stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
+python src/runnable/stock_data_clean_runnable.py --type nav --source_path <LOCAL_OR_S3_PATH> --output_path s3:\\sdt-data
 
 local :
 python src/runnable/stock_data_clean_runnable.py --type nav --input_path data/cef/price/AWF_5d.parquet --input_path2 data/cef/nav/AWF_1mo.parquet --output_path data/cef
 
-
-
 Stock clean :
-python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path s3:\\sdt-data
+python stock_data_clean_runnable.py --source_path --type price <LOCAL_OR_S3_PATH> --output_path s3:\\sdt-data
 
-python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
 
-python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
-
+Stock Calcs:
+python src/runnable/stock_data_calcs_runnable.py --symbol AWF
