@@ -2,23 +2,23 @@
 import json
 import logging
 import os
-from stock_metrics import check_current_cef_discount
+from current_stock_metrics import check_current_cef_discount
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }
 logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
 
-# rds settings
-user_name = os.environ['USER_NAME']
-password = os.environ['PASSWORD']
-rds_host = os.environ['RDS_HOST']
-db_name = os.environ['DB_NAME']
+# postgres settings
+db_params = {'rds_host': os.environ['RDS_HOST'], 
+            'user_name': os.environ['USER_NAME'], 
+            'password': os.environ['PASSWORD'], 
+            'db_name': os.environ['DB_NAME']}
 
 alert_mode = os.getenv('ALERT_MODE', default = 'LOG')
 
@@ -31,7 +31,7 @@ def lambda_handler(event, context):
 
     try:
         check_current_cef_discount(stock_symbol, current_premium_discount, 
-                                   user_name, password, rds_host, db_name,
+                                   db_params=db_params,
                                    alert_mode=alert_mode)
     except Exception as e:
         logger.error(f'Error checking discount for {stock_symbol}: {e}')

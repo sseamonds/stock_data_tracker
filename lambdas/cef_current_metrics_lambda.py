@@ -7,10 +7,10 @@ import os
 import stock_data_functions as sdf
 import boto3
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }

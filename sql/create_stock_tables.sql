@@ -31,7 +31,7 @@ PRIMARY KEY (symbol, record_date)
 -- current metrics table
 CREATE TABLE current_stock_metrics (
 symbol varchar(5) PRIMARY KEY,
-nav_discount_avg_1y numeric(16, 4),
-nav_discount_avg_max numeric(16, 4),
+nav_discount_premium_avg_1yr numeric(6, 4),
+nav_discount_premium_avg_max numeric(6, 4),
 last_updated TIMESTAMP
 );

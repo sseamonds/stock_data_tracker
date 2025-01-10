@@ -12,6 +12,16 @@ from stock_data_clean import clean_price_data, clean_cef_data
 import time
 from dotenv import load_dotenv
 
+# configure logging
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
+logger = logging.getLogger(__name__)
+
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
 
@@ -41,9 +51,6 @@ if __name__ == "__main__":
     """
     Local script to run clean stock data
     """
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
     args = parse_arg()
     input_path = args['input_path']
     output_path = args['output_path']

@@ -7,18 +7,24 @@ import os
 import awswrangler as wr
 from urllib.parse import unquote_plus
 from utils import get_symbol_from_full_path
-from rds_functions import upsert_stock_metrics
-from stock_metrics import get_nav_metrics_from_df
+from rds_functions import save_current_stock_metrics
+from current_stock_metrics import get_current_nav_metrics_from_df
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }
 logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
+
+# postgres settings
+db_params = {'rds_host': os.environ['RDS_HOST'], 
+            'user_name': os.environ['USER_NAME'], 
+            'password': os.getenv('PASSWORD',None), 
+            'db_name': os.environ['DB_NAME']}
 
 
 def lambda_handler(event, context):
@@ -39,16 +45,13 @@ def lambda_handler(event, context):
     
         # differentiate transformations based on the type of data
         if key.find('cef') != -1:
-            # Persist summary metrics to RDS
-            user_name = os.environ['USER_NAME']
-            password = os.environ['PASSWORD']
-            rds_host = os.environ['RDS_HOST']
-            db_name = os.environ['DB_NAME']
 
-            nav_discount_avg_1y, nav_discount_avg_alltime = get_nav_metrics_from_df(calc_df)
+            nav_discount_premium_avg_1yr, nav_discount_premium_avg_max = get_current_nav_metrics_from_df(calc_df)
 
-            insert_return_value = upsert_stock_metrics(symbol, nav_discount_avg_1y, nav_discount_avg_alltime, 
-                                 user_name, password, rds_host, db_name) 
+            insert_return_value = save_current_stock_metrics(symbol, 
+                                                               nav_discount_premium_avg_1yr, 
+                                                               nav_discount_premium_avg_max, 
+                                                               db_params) 
             if insert_return_value:
                 logger.info(f'inserted stock metrics data for {symbol}')
                 return {

@@ -7,21 +7,21 @@ from stock_data_clean import clean_cef_data
 from rds_functions import save_stock_history
 from utils import get_symbol_from_full_path, get_period_from_full_path, get_prefix_from_full_path
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }
 logging.basicConfig(**default_log_args)
 logger = logging.getLogger(__name__)
 
-# rds settings
-user_name = os.environ['USER_NAME']
-password = os.environ['PASSWORD']
-rds_host = os.environ['RDS_HOST']
-db_name = os.environ['DB_NAME']
+# postgres settings
+db_params = {'rds_host': os.environ['RDS_HOST'], 
+            'user_name': os.environ['USER_NAME'], 
+            'password': os.environ['PASSWORD'], 
+            'db_name': os.environ['DB_NAME']}
 
 
 def lambda_handler(event, context):
@@ -92,11 +92,7 @@ def lambda_handler(event, context):
         logger.debug(f'Done writing cleaned data: {response=}')
 
         # insert stock history
-        save_stock_history(df=cleaned_df, symbol=symbol, 
-                             db_params={'rds_host': rds_host, 
-                                        'user_name': user_name, 
-                                        'password': password, 
-                                        'db_name': db_name})
+        save_stock_history(df=cleaned_df, symbol=symbol, db_params=db_params)
 
         return {
             "statusCode": 200,

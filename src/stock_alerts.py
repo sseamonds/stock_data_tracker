@@ -1,14 +1,13 @@
 
 import json
 import logging
-from botocore.exceptions import ClientError
 import boto3
 import os
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }

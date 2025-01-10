@@ -9,12 +9,24 @@ from utils import get_period_from_full_path
 from rds_functions import get_stock_history, save_stock_metrics_history
 from dotenv import load_dotenv
 
+# configure logging
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
+logger = logging.getLogger(__name__)
+
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(dotenv_path)
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
+# postgres settings
+db_params = {'rds_host': os.environ['RDS_HOST'], 
+            'user_name': os.environ['USER_NAME'], 
+            'password': os.getenv('PASSWORD',None), 
+            'db_name': os.environ['DB_NAME']}
 
 def parse_arg():
     """
@@ -35,12 +47,6 @@ if __name__ == "__main__":
     args = parse_arg()
     type = args['type']
     symbol = args['symbol']
-
-    # postgres settings
-    db_params = {'rds_host': os.environ['RDS_HOST'], 
-                'user_name': os.environ['USER_NAME'], 
-                'password': os.getenv('PASSWORD',None), 
-                'db_name': os.environ['DB_NAME']}
     
     if type == 'cef':
         df = get_stock_history(symbol, db_params)

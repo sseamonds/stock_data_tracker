@@ -8,10 +8,10 @@ from urllib.parse import unquote_plus
 from stock_data_calcs import calculate_stock_metrics, calculate_cef_metrics
 from utils import get_symbol_from_full_path, get_period_from_full_path
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }

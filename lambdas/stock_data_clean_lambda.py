@@ -8,10 +8,10 @@ from stock_data_clean import clean_price_data
 from utils import get_symbol_from_full_path, get_prefix_from_full_path, get_period_from_full_path
 from rds_functions import save_stock_history
 
-# Configure logging
+# configure logging
 default_log_args = {
     "level": logging.INFO,
-    "format": "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
     "datefmt": "%d-%b-%y %H:%M",
     "force": True,
 }

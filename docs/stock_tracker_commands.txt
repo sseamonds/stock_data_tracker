@@ -1,3 +1,6 @@
+# cli commands for local runs
+
+
 CEF pull :
 python src/runnable/stock_data_pull.py --type price --stock_symbol JRS --period=1mo --output_path s3://sdt-data/bronze/cef
 python src/runnable/stock_data_pull.py --type nav --stock_symbol XJRSX --period=1mo --output_path s3://sdt-data/bronze/cef
@@ -22,3 +25,10 @@ python stock_data_clean_runnable.py --source_path --type price <LOCAL_OR_S3_PATH
 
 Stock Calcs:
 python src/runnable/stock_data_calcs_runnable.py --symbol AWF
+
+Summary metrics for a single stock derived from historical :
+python src/runnable/current_stock_metrics_runnable.py --symbol AWF
+
+Stock metrics check:
+python src/runnable/stock_data_checks_runnable.py --symbol AWF
+

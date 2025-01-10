@@ -2,6 +2,16 @@ import yfinance as yf
 import argparse as ap
 import logging
 
+# configure logging
+default_log_args = {
+    "level": logging.INFO,
+    "format": "%(asctime)s [%(levelname)s] %(name)s - %(funcName)s : %(message)s",
+    "datefmt": "%d-%b-%y %H:%M",
+    "force": True,
+}
+logging.basicConfig(**default_log_args)
+logger = logging.getLogger(__name__)
+
 
 def get_yahoo_historical(stock_symbol, file_dest, period='1d'):
     """
@@ -74,9 +84,6 @@ if __name__ == '__main__':
         --output_path : base path to write output file
         --period : (optional) yfinance arg defining the time period of data to pull
     """
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(encoding='utf-8', level=logging.INFO)
-
     args = parse_arg()
 
     output_path_arg = args['output_path']
