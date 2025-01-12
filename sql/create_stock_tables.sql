@@ -8,6 +8,7 @@ CREATE DATABASE sdt;
 \c sdt
 
 -- historical price table
+--DROP TABLE stock_history;
 CREATE TABLE stock_history (
 symbol varchar(5),
 record_date date,
@@ -17,6 +18,7 @@ PRIMARY KEY(symbol, record_date)
 );
 
 -- historical metrics table
+--DROP TABLE stock_metrics_history;
 CREATE TABLE stock_metrics_history (
 symbol varchar(5),
 record_date date,
@@ -29,6 +31,7 @@ PRIMARY KEY (symbol, record_date)
 );
 
 -- current metrics table
+--DROP TABLE current_stock_metrics;
 CREATE TABLE current_stock_metrics (
 symbol varchar(5) PRIMARY KEY,
 nav_discount_premium_avg_1yr numeric(6, 4),

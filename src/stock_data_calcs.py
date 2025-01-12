@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def calculate_hist_metrics(df: pd.DataFrame):
     """
     Calculate and persist metrics from history dataset (dividends, splits, volume, etc).

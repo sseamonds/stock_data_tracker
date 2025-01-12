@@ -1,4 +1,5 @@
-"""Receive current metrics for a stock from SQS and check the current premium/discount."""
+"""Receive current price/metrics for a stock from SQS 
+and check the current trailing metrics."""
 import json
 import logging
 import os
@@ -21,6 +22,7 @@ db_params = {'rds_host': os.environ['RDS_HOST'],
             'db_name': os.environ['DB_NAME']}
 
 alert_mode = os.getenv('ALERT_MODE', default = 'LOG')
+
 
 def lambda_handler(event, context):
     logger.debug("Received event: " + json.dumps(event, indent=2))

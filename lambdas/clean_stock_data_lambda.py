@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import awswrangler as wr 
+import boto3
 from urllib.parse import unquote_plus
 from stock_data_clean import clean_cef_data
 from rds_functions import save_stock_history
@@ -39,6 +40,7 @@ def lambda_handler(event, context):
         input_path = f's3://{bucket}/{key}'
         logger.info(f'{input_path=}')
         
+        # Todo : add logic for stock data
         # ensure both source files exist, otherwise do nothing
         if '/price/' in key:
             price_df = wr.s3.read_parquet(input_path)
@@ -94,6 +96,17 @@ def lambda_handler(event, context):
         # insert stock history
         save_stock_history(df=cleaned_df, symbol=symbol, db_params=db_params)
 
+        # Trigger data calcs lambda
+        next_lambda = 'arn:aws:lambda:us-west-2:043309363436:function:stock_data_calcs'
+        lambda_client = boto3.client('lambda')
+        payload = {"Records": [{"symbol": symbol}]}
+        invoke_response = lambda_client.invoke(
+            FunctionName=next_lambda,
+            InvocationType='Event',
+            Payload=json.dumps(payload)
+        )
+        logger.debug(f'Triggered lambda {next_lambda} : {invoke_response}')
+
         return {
             "statusCode": 200,
             "headers": {
@@ -103,4 +116,10 @@ def lambda_handler(event, context):
         }
     except Exception as e:
         logger.error(f"An exception occurred cleaning stock data: {e}")
-        raise e
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body":f"An exception occurred cleaning stock data: {e}"
+        }

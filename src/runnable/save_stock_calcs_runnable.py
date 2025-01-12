@@ -5,7 +5,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import logging
 from stock_data_calcs import calculate_cef_metrics
-from utils import get_period_from_full_path
 from rds_functions import get_stock_history, save_stock_metrics_history
 from dotenv import load_dotenv
 
@@ -50,9 +49,6 @@ if __name__ == "__main__":
     
     if type == 'cef':
         df = get_stock_history(symbol, db_params)
-        logger.info(f'after get_stock_history {df.columns=}')
-        logger.info(f'after get_stock_history :\n{df=}')
-
         calc_df = calculate_cef_metrics(df)
         success = save_stock_metrics_history(calc_df, db_params)
 

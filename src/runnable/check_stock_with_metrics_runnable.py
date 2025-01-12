@@ -1,6 +1,7 @@
 '''
 Runnable for getting current stock data from yfinance and checking the premium/discount 
-against the 1 year and all time averages in the RDS database
+against the 1 year and all time averages in the RDS database.
+Alert if daily metric are above persisted metrics (for instance if nav discount is below it's 1 year average)
 Will be split into two for Lambda runs
 '''
 import logging

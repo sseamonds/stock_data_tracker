@@ -13,22 +13,22 @@ Simple data eng project to practice some AWS flows using stock ticker data.
   - This will be appended to with a daily run and current metrics (latest overall price average, 1 yr moving average, latest div yield, etc) will be recalculated.
 
 ### To pull data from Yahoo finance :
-- python src/runnable/stock_data_pull.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --output_path <LOCAL_OR_S3_PATH>
+- python src/runnable/get_historical_stock_data.py --type [price|nav] --stock_symbol <STOCK_TICKER_ALL_CAPS> --period=<TIME_LENGTH> --output_path <LOCAL_OR_S3_PATH>
   - see NOTES below on period param
   - Example for CEF
-    - python src/stock_data_pull.py --type price --stock_symbol AWF --period=1y --output_path s3://sdt-stock-data/bronze/cef
-    - python src/stock_data_pull.py --type nav --stock_symbol XAWFX --period=1y --output_path s3://sdt-stock-data/bronze/cef
+    - python src/get_historical_stock_data.py --type price --stock_symbol AWF --period=1y --output_path s3://sdt-stock-data/bronze/cef
+    - python src/get_historical_stock_data.py --type nav --stock_symbol XAWFX --period=1y --output_path s3://sdt-stock-data/bronze/cef
     - pulls price AND nav separately which will be merged in cleaning process
   - Example for stock
-    - python src/stock_data_pull.py --type price --stock_symbol VOO --period=1y --output_path s3://sdt-stock-data/bronze/stock
+    - python src/get_historical_stock_data.py --type price --stock_symbol VOO --period=1y --output_path s3://sdt-stock-data/bronze/stock
   - output_path should be of format <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 
 ### To clean data :
-- python stock_data_clean_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
+- python clean_stock_data_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
   - Lambda trigger should be set to <s3_bronze_path>/cef for CEFs and <s3_bronze_path>/stock for stocks
 
 ### To calculate metrics :
-- python stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
+- python save_stock_data_calcs_runnable.py --source_path <LOCAL_OR_S3_PATH> --output_path <LOCAL_OR_S3_PATH>
 - Lambda trigger should be set to <s3_silver_path>
 
 ### To Query/Insert stock metrics into RDS locally (can simply use a local postgres for testing instead):
@@ -61,7 +61,7 @@ see:
 ## Running cleaning/calcs scripts as lambdas:
 #### The Lambda version of the code is in the lambdas directory
 #### Setting up with S3-based triggers for lambdas will cause the cleaning and calcs scripts to run when you put a new raw stock file in the s3://<base_bucket>/bronze/ folder. 
-- This can be done manually OR via stock_data_pull.py as described above but with an S3 destination
+- This can be done manually OR via get_historical_stock_data.py as described above but with an S3 destination
 #### To setup lambdas for each process: 
 - Create a lambda and 'deploy' the code : copy the lambdas/*.py file and all imported dependency src/*.py files to the lambda
   - Up your timeout (default is 3 seconds, I did a minute, currently the scripts typically run in 30 seconds or less)
@@ -72,7 +72,7 @@ see:
   - prefix : any subfolders (I use bronze/ and silver/ for my clean and calcs lambdas)
   - this will automatically add a [resource-based policy](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) allowing S3 to invoke your lambda function
     - or you can choose en existing role with a cloudWatch log policy, S3 write policy and select it
-- Add a layer for awswrangler/pandas (if a lambda operates on parquet data in S3)
+- Add a layer for awswrangler/pandas (if a lambda operates on parquet data in S3, or if lambda imports pandas/numpy (which rds_functions.py does...))
   - I use 'AWSSDKPandas-Python312' which is one of the available options when adding a layer
   - the layer should contain any non-core python modules that you'd need
     - in this case we needed awswrangler, numpy, pandas
@@ -115,8 +115,8 @@ see:
   - Setup the Lambda
     - use lambdas/stock_metrics_lambda.py
     - upload utils.py, rds_functions.py, and stock_metrics.py
-    - run the scripts/build_psycopg_layer.sh to generate a psycopg layer in the form of a zip file 
-    - add the psycopg zip as a layer and attach to the lambda
+    - run the scripts/build_psycopg2_sqlalchemy_layer.sh to generate a psycopg/sqlalchemy layer in the form of a zip file 
+    - add the psycopg2-layer.zip as a layer and attach to the lambda
     - attach to the same VPC as the RDS instance
     - setup a VPC endpoint for S3 access (https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html)
       - SEE : https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html
@@ -129,7 +129,20 @@ see:
       - Post creation : Go to VPC Endpoints, pick the one you just created, and add a VPC route table (I already had a private one for RDS, and used that one)
     - ensure the right security groups are attached with the VPC
       - for me it was the SG for the rds instance (generated when adding a Lambda to the RDS instance, named something like "lambda-rds-1")
-      - if the Lambda consumes from S3 you need the default SG.  A Lambda doesn't normally need this for S3 access, but one with a VPC attached does need it
+      - if the Lambda also consumes from S3 you need the default SG as well.  A Lambda doesn't normally need this for S3 access, but one with a VPC attached does need it
+- For the lambdas that invoke other lambdas :
+  - pass a payload of format :
+  {
+    "Records": [
+      {
+          "var": var_val
+          ....etc....
+      }
+    ]
+  }
+  - call next lambda by it's arn
+  - set up an interface VPC endpoint for lambda in desired region
+    - see instructions for SNS under "To log alerts to SNS...". Key difference is that you will choose the option AWS Service, and enter lambda, then choose lambda.<region> (mine is com.amazonaws.us-west-2.lambda for instance)
 - For lambdas which hit yfinance
   - use scripts/build_yfinance_layer.sh to build a yfinance layer
   - add the layer to the lambda
